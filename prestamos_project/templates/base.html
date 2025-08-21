@@ -1,0 +1,179 @@
+<!--
+  base.html
+
+  Esta es la plantilla principal de la aplicación. Define la estructura general de la página,
+  incluyendo la barra de navegación superior, la barra lateral y el área de contenido.
+  Otras plantillas (como panel.html) heredan de esta.
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <!-- Meta tag para asegurar que la página sea responsive en dispositivos móviles -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- El título de la página puede ser personalizado por las plantillas hijas -->
+    <title>{% block title %}HEM Lending - Panel{% endblock %}</title>
+    
+    <!-- Carga los archivos estáticos de Django -->
+    {% load static %}
+    
+    <!-- Enlace a la hoja de estilos principal -->
+    <link rel="stylesheet" href="{% static 'style/base.css' %}">
+    
+    <!-- Enlace a Font Awesome para los iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- Estilos para django-select2 -->
+    {{ form.media.css }}
+</head>
+<body>
+
+    <!-- =================================== -->
+    <!-- BARRA DE NAVEGACIÓN SUPERIOR (FIJA) -->
+    <!-- =================================== -->
+    <header class="top-navbar">
+        <!-- Logo de la empresa a la izquierda -->
+        <div class="logo">HEM Lending</div>
+        
+        <!-- Navegación de usuario a la derecha -->
+        <nav class="user-nav">
+            <ul>
+                <!-- Elemento del menú de usuario que contiene el desplegable -->
+                <li class="user-menu">
+                    <!-- Este enlace activa el menú desplegable. `data-toggle="dropdown"` es usado por el JS -->
+                    <a href="#" data-toggle="dropdown">
+                        <i class="fa-solid fa-user-circle"></i>
+                        <span>{{ user.username }}</span>
+                        <i class="fa-solid fa-caret-down"></i>
+                    </a>
+                    <!-- Menú desplegable con las opciones de perfil y cierre de sesión -->
+                    <ul class="dropdown-menu">
+                        <li><a href="{% url 'profile' %}"><i class="fa-solid fa-user"></i> Ver Perfil</a></li>
+                        <!--
+                          El logout se implementa como un formulario con método POST por seguridad.
+                          Esto previene ataques de tipo "Cross-Site Request Forgery" (CSRF),
+                          evitando que un sitio malicioso pueda cerrar la sesión de un usuario sin su consentimiento.
+                        -->
+                        <li>
+                            <form action="{% url 'logout' %}" method="post" class="logout-form">
+                                {% csrf_token %}
+                                <button type="submit" class="logout-button">
+                                    <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- ====================================================== -->
+    <!-- BARRA DE NAVEGACIÓN VERTICAL (MENÚ PRINCIPAL DE MÓDULOS) -->
+    <!-- ====================================================== -->
+    <aside class="vertical-navbar">
+        <nav>
+            <ul>
+                <li><a href="{% url 'panel_informativo' %}"><i class="fa-solid fa-circle-info"></i> Panel Informativo</a></li>
+                <li>
+                    <!-- Este enlace activa el submenú. `data-toggle="submenu"` es usado por el JS -->
+                    <a href="#" data-toggle="submenu"><i class="fa-solid fa-hand-holding-dollar"></i> Préstamos</a>
+                    <ul class="submenu">
+                        <li><a href="{% url 'loan_add' %}">Registrar Préstamo</a></li>
+                        <li><a href="{% url 'loan_list' %}">Préstamos Activos</a></li>
+                        <li><a href="#">Préstamos Activos</a></li>
+                        <li><a href="#">Préstamos Vencidos</a></li>
+                        <li><a href="#">Historial de Préstamos</a></li>
+                        <li><a href="#">Amortización</a></li>
+                        <li><a href="#">Pagos Anticipados</a></li>
+                        <li><a href="#">Clientes con Préstamos</a></li>
+                        <li><a href="#">Reportes</a></li>
+                    </ul>
+                </li>
+                <li><a href="{% url 'client_list' %}"><i class="fa-solid fa-users"></i> Clientes</a></li>
+                <li><a href="{% url 'cobros_list' %}"><i class="fa-solid fa-cash-register"></i> Cobros</a></li>
+                <li><a href="#"><i class="fa-solid fa-shield-halved"></i> Seguridad</a></li>
+                <li><a href="#"><i class="fa-solid fa-scale-balanced"></i> Legal</a></li>
+                <li><a href="#"><i class="fa-solid fa-calculator"></i> Calculadora</a></li>
+                <li><a href="#"><i class="fa-solid fa-database"></i> Backup</a></li>
+                <li><a href="#"><i class="fa-solid fa-gear"></i> Configuración</a></li>
+                <li><a href="#"><i class="fa-solid fa-chart-line"></i> Reportes</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- ================================= -->
+    <!-- ÁREA DE CONTENIDO PRINCIPAL       -->
+    <!-- ================================= -->
+    <main>
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        <!-- Aquí es donde las plantillas hijas inyectarán su contenido específico -->
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- ================================= -->
+    <!-- SCRIPT PARA MENÚS DESPLEGABLES  -->
+    <!-- ================================= -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    {{ form.media.js }}
+    <script>
+        // Espera a que todo el contenido del DOM esté cargado antes de ejecutar el script
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            /**
+             * Función genérica para manejar la apertura y cierre de los menús 
+             * (tanto el de usuario como el de la barra lateral).
+             */
+            const toggleHandler = function(event) {
+                // Previene que el navegador siga el enlace (ej. href="#")
+                event.preventDefault();
+
+                // Encuentra el menú desplegable que es hermano del elemento clickeado
+                const menu = this.nextElementSibling;
+                if (!menu) return; // Si no hay menú, no hace nada
+                
+                // Guarda si el menú actual ya estaba activo antes del clic
+                const isAlreadyActive = menu.classList.contains('active');
+
+                // Cierra todos los menús que estén abiertos para evitar tener múltiples menús abiertos
+                document.querySelectorAll('.submenu.active, .dropdown-menu.active').forEach(function(m) {
+                    m.classList.remove('active');
+                });
+
+                // Si el menú no estaba activo, lo abre. Si ya estaba activo, lo deja cerrado (efecto de cierre al volver a hacer clic).
+                if (!isAlreadyActive) {
+                    menu.classList.add('active');
+                }
+            };
+
+            // Selecciona todos los elementos que activan menús y les asigna el manejador de eventos
+            const toggles = document.querySelectorAll('[data-toggle="submenu"], [data-toggle="dropdown"]');
+            toggles.forEach(function(toggle) {
+                toggle.addEventListener('click', toggleHandler);
+            });
+
+            /**
+             * Cierra los menús si el usuario hace clic en cualquier lugar fuera de ellos.
+             * Esto mejora la experiencia de usuario.
+             */
+            window.addEventListener('click', function(event) {
+                // Comprueba si el clic no fue dentro de un menú de usuario o un activador de submenú
+                if (!event.target.closest('.user-menu') && !event.target.closest('[data-toggle="submenu"]')) {
+                    document.querySelectorAll('.submenu.active, .dropdown-menu.active').forEach(function(menu) {
+                        menu.classList.remove('active');
+                    });
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

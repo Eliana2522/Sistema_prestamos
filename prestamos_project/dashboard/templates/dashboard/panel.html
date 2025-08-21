@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Panel Informativo{% endblock %}
+
+{% block content %}
+<!-- Encabezado de la página de contenido -->
+<header class="page-header">
+    <h1>Inicio</h1>
+    <p>Bienvenido al panel informativo. Aquí encontrarás un resumen de la actividad reciente.</p>
+</header>
+
+<!-- Sección de tarjetas de resumen -->
+<section class="cards-section">
+    <div class="cards">
+        <div class="card">
+            <h4>Total Prestado (Activo)</h4>
+            <!-- Muestra el valor de la nueva variable del contexto. -->
+            <p class="card-value">${{ total_prestado_activo|intcomma|floatformat:2 }}</p>
+        </div>
+        <div class="card success">
+            <h4>Ganancias Totales</h4>
+            <!-- 
+              Muestra las ganancias totales. El filtro `intcomma` (del paquete humanize) 
+              añade comas como separadores de miles (ej. 1,250.00).
+              El filtro `floatformat:2` asegura que siempre se muestren 2 decimales.
+            -->
+            <p class="card-value">${{ ganancias_totales|intcomma|floatformat:2 }}</p>
+        </div>
+        <div class="card">
+            <h4>Total de Clientes</h4>
+            <p class="card-value">{{ total_clientes|intcomma }}</p>
+        </div>
+    </div>
+</section>
+
+<!-- Sección de columnas de información -->
+<section class="pagos-section">
+    <div class="pagos">
+        <div class="column">
+            <h3>Cobros para Hoy</h3>
+            {% if cobros_hoy %}
+                <ul>
+                    {% for cuota in cobros_hoy %}
+                        <li>
+                            <strong>{{ cuota.prestamo.cliente }}</strong> - Préstamo #{{ cuota.prestamo.id }}
+                            <span style="float: right;">${{ cuota.monto_cuota|intcomma|floatformat:2 }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No hay cobros programados para hoy.</p>
+            {% endif %}
+        </div>
+        <div class="column">
+            <h3>Cobros para Mañana</h3>
+            {% if cobros_manana %}
+                <ul>
+                    {% for cuota in cobros_manana %}
+                        <li>
+                            <strong>{{ cuota.prestamo.cliente }}</strong> - Préstamo #{{ cuota.prestamo.id }}
+                            <span style="float: right;">${{ cuota.monto_cuota|intcomma|floatformat:2 }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No hay cobros programados para mañana.</p>
+            {% endif %}
+        </div>
+        <div class="column">
+            <h3>Ingresos Recientes</h3>
+            {% if ingresos_recientes %}
+                <ul class="lista-ingresos">
+                    {% for pago in ingresos_recientes %}
+                        <li class="ingreso-item">
+                            <div class="ingreso-info">
+                                <!-- Accedemos al cliente a través de la cuota -->
+                                <span class="ingreso-cliente">De: {{ pago.cuota.prestamo.cliente }}</span>
+                                <span class="ingreso-fecha">{{ pago.fecha_pago|date:"d M, Y" }}</span>
+                            </div>
+                            <div class="ingreso-monto">
+                                +${{ pago.monto_pagado|intcomma }}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No se han registrado ingresos recientemente.</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - HEM Lending</title>
+    <link rel="stylesheet" href="{% static 'style/base.css' %}">
+    <style>
+        /* Estilos específicos para la página de login */
+        body {
+            background-color: #F5F7FA;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding-top: 0;
+        }
+        .login-container {
+            background-color: #FFFFFF;
+            padding: 2.5rem 3rem;
+            border-radius: 8px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            border-top: 5px solid #005A9C;
+        }
+        .login-container h1 {
+            color: #005A9C;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+        }
+        .login-container form p {
+            color: #6C757D;
+        }
+        .login-container form input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 1rem;
+            border: 1px solid #CED4DA;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .login-container form button {
+            width: 100%;
+            padding: 12px;
+            background-color: #005A9C;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .login-container form button:hover {
+            background-color: #004B81;
+        }
+        .error-message {
+            color: #D93025;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>HEM Lending</h1>
+
+        <!-- 
+          Si el formulario tiene errores (ej. contraseña incorrecta), la vista LoginView de Django
+          vuelve a renderizar esta plantilla con un objeto `form` que contiene información del error.
+          Aquí comprobamos si existen esos errores para mostrar un mensaje amigable.
+        -->
+        {% if form.errors %}
+            <p class="error-message">Tu usuario o contraseña son incorrectos. Por favor, inténtalo de nuevo.</p>
+        {% endif %}
+
+        <!-- 
+          Este es el formulario de login. `method="post"` es importante porque los datos de sesión
+          deben enviarse de forma segura.
+        -->
+        <form method="post">
+            <!-- 
+              Etiqueta de seguridad OBLIGATORIA en todos los formularios POST de Django.
+              Protege contra ataques de tipo Cross-Site Request Forgery (CSRF).
+            -->
+            {% csrf_token %}
+
+            <!-- 
+              `{{ form.as_p }}` es una forma mágica de Django para renderizar los campos del formulario
+              (en este caso, usuario y contraseña) dentro de párrafos `<p>`.
+              La vista `LoginView` de Django crea y nos pasa este formulario automáticamente.
+            -->
+            {{ form.as_p }}
+
+            <button type="submit">Iniciar Sesión</button>
+        </form>
+    </div>
+</body>
+</html>

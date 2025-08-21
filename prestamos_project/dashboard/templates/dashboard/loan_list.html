@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Préstamos Activos{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <h1>Préstamos Activos</h1>
+    <p>Aquí puedes ver todos los préstamos que se encuentran en estado activo.</p>
+</header>
+
+<div class="content-container">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID Préstamo</th>
+                    <th>Cliente</th>
+                    <th>Monto</th>
+                    <th>Tasa Interés</th>
+                    <th>Plazo (meses)</th>
+                    <th>Frecuencia</th>
+                    <th>Fecha Desembolso</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prestamo in prestamos %}
+                <tr>
+                    <td>{{ prestamo.id }}</td>
+                    <td>{{ prestamo.cliente.nombres }} {{ prestamo.cliente.apellidos }}</td>
+                    <td>${{ prestamo.monto|intcomma|floatformat:2 }}</td>
+                    <td>{{ prestamo.tasa_interes|floatformat:2 }}%</td>
+                    <td>{{ prestamo.plazo }}</td>
+                    <td>{{ prestamo.frecuencia_pago|capfirst }}</td>
+                    <td>{{ prestamo.fecha_desembolso|date:"d/m/Y" }}</td>
+                    <td>
+                        <a href="{% url 'loan_detail' pk=prestamo.id %}" class="btn btn-primary btn-sm">Ver Detalles</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center">No hay préstamos activos registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

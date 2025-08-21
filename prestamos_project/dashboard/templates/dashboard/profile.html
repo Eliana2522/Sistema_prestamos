@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Perfil{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <h1>Mi Perfil</h1>
+    <p>Información de tu cuenta de usuario.</p>
+</header>
+
+<div class="column">
+    <h3>Detalles del Usuario</h3>
+    <!--
+      Gracias al `context_processor` de autenticación, en cualquier plantilla tenemos acceso
+      a la variable `user`, que representa al usuario que ha iniciado sesión actualmente.
+      Podemos acceder a sus atributos directamente.
+    -->
+    <p><strong>Usuario:</strong> {{ user.username }}</p>
+    <p><strong>Correo Electrónico:</strong> {{ user.email|default:"No especificado" }}</p>
+    <p><strong>Nombre:</strong> {{ user.first_name|default:"No especificado" }}</p>
+    <p><strong>Apellido:</strong> {{ user.last_name|default:"No especificado" }}</p>
+    <p><strong>Último inicio de sesión:</strong> {{ user.last_login|date:"d/m/Y H:i" }}</p>
+    <p><strong>Fecha de registro:</strong> {{ user.date_joined|date:"d/m/Y" }}</p>
+    <!--
+      Los "filtros" de plantilla (como `|default:"..."` o `|date:"..."`) nos permiten
+      modificar la forma en que se muestra una variable. `default` muestra un texto si la variable
+      está vacía, y `date` formatea una fecha a nuestro gusto.
+    -->
+</div>
+{% endblock %}
