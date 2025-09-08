@@ -1,24 +1,145 @@
 {% extends 'base.html' %}
 
-{% block title %}Registrar Préstamo{% endblock %}
+{% block title %}Registrar Nuevo Préstamo{% endblock %}
 
 {% block content %}
-<header class="page-header">
-    <h1>Registrar Nuevo Préstamo</h1>
-    <p>Rellena los campos para registrar un nuevo préstamo en el sistema.</p>
-</header>
-
-<div class="content-container">
-    <form method="post" novalidate>
-        {% csrf_token %}
-        
-        {{ form.as_p }}
-        
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Guardar Préstamo</button>
-            <a href="{% url 'panel_informativo' %}" class="btn btn-secondary">Cancelar</a>
+<div class="container-fluid">
+    <!-- Encabezado de la página -->
+    <header class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="fa-solid fa-hand-holding-dollar"></i> Registrar Nuevo Préstamo</h1>
+            <p class="text-muted">Completa los detalles del préstamo y los gastos asociados.</p>
         </div>
-    </form>
+        <a href="{% url 'loan_list' %}" class="btn btn-secondary">Cancelar y Volver</a>
+    </header>
+
+    <div class="content-container">
+        <form method="post" id="loan-form">
+            {% csrf_token %}
+            
+            <!-- Sección de Detalles del Préstamo -->
+            <section class="mb-5">
+                <h4 class="mb-3">1. Detalles del Préstamo</h4>
+                <div class="row">
+                    <div class="col-md-6 mb-3">{{ form.cliente.label_tag }} {{ form.cliente }}</div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.tipo_prestamo.label_tag }}
+                        {{ form.tipo_prestamo }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.monto.label_tag }}
+                        {{ form.monto }}
+                        <small id="monto-ayuda" class="form-text text-muted"></small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.tasa_interes.label_tag }}
+                        {{ form.tasa_interes }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.plazo.label_tag }}
+                        {{ form.plazo }}
+                        <small id="plazo-ayuda" class="form-text text-muted"></small>
+                    </div>
+                    <div class="col-md-6 mb-3">{{ form.frecuencia_pago.label_tag }} {{ form.frecuencia_pago }}</div>
+                    <div class="col-md-6 mb-3">{{ form.fecha_desembolso.label_tag }} {{ form.fecha_desembolso }}</div>
+                </div>
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                {% endif %}
+            </section>
+
+            <!-- Sección de Gastos Asociados -->
+            <section class="mb-4">
+                <h4 class="mb-3">2. Gastos Asociados (Opcional)</h4>
+                <p class="text-muted small">Los montos aquí se sumarán al capital del préstamo.</p>
+                
+                {{ gasto_formset.management_form }}
+                <div id="gasto-forms-container">
+                    {% for form in gasto_formset %}
+                        <div class="row align-items-center gasto-form mb-2">
+                            <div class="col-md-4">{{ form.tipo_gasto }}</div>
+                            <div class="col-md-3">{{ form.monto }}</div>
+                            <div class="col-md-4">{{ form.descripcion }}</div>
+                            <div class="col-md-1">
+                                {% if form.instance.pk %}
+                                    {{ form.DELETE.label_tag }} {{ form.DELETE }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="button" id="add-gasto-form" class="btn btn-outline-primary btn-sm mt-2"><i class="fa-solid fa-plus"></i> Añadir Otro Gasto</button>
+            </section>
+
+            <!-- Acciones del Formulario -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-lg">Registrar Préstamo</button>
+            </div>
+        </form>
+    </div>
 </div>
+
+<!-- Plantilla para nuevos formularios de gastos (oculta) -->
+<div id="gasto-form-template" style="display: none;">
+    <div class="row align-items-center gasto-form mb-2" id="gasto-form-__prefix__">
+        <div class="col-md-4">{{ gasto_formset.empty_form.tipo_gasto }}</div>
+        <div class="col-md-3">{{ gasto_formset.empty_form.monto }}</div>
+        <div class="col-md-4">{{ gasto_formset.empty_form.descripcion }}</div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-danger btn-sm remove-gasto-form">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- LÓGICA PARA GASTOS DINÁMICOS ---
+    const container = document.getElementById('gasto-forms-container');
+    const addButton = document.getElementById('add-gasto-form');
+    const template = document.getElementById('gasto-form-template').innerHTML;
+    const totalForms = document.getElementById('id_gastoprestamo_set-TOTAL_FORMS');
+    let formNum = {{ gasto_formset.total_form_count }};
+
+    addButton.addEventListener('click', function() {
+        const newForm = template.replace(/__prefix__/g, formNum);
+        const div = document.createElement('div');
+        div.innerHTML = newForm;
+        container.appendChild(div.firstElementChild);
+        totalForms.value = parseInt(totalForms.value) + 1;
+        formNum++;
+    });
+
+    container.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('remove-gasto-form')) {
+            e.target.closest('.gasto-form').remove();
+            totalForms.value = parseInt(totalForms.value) - 1;
+        }
+    });
+
+    // --- LÓGICA PARA DETALLES DE TIPO DE PRÉSTAMO ---
+    const tipoPrestamoSelect = document.getElementById('id_tipo_prestamo');
+    const tasaInteresInput = document.getElementById('id_tasa_interes');
+    const montoAyuda = document.getElementById('monto-ayuda');
+    const plazoAyuda = document.getElementById('plazo-ayuda');
+
+    tipoPrestamoSelect.addEventListener('change', function() {
+        const tipoPrestamoId = this.value;
+        if (tipoPrestamoId) {
+            fetch(`/api/tipo-prestamo/${tipoPrestamoId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    tasaInteresInput.value = data.tasa_interes_predeterminada;
+                    montoAyuda.textContent = `Mín: ${data.monto_minimo} / Máx: ${data.monto_maximo}`;
+                    plazoAyuda.textContent = `Mín: ${data.plazo_minimo_meses} meses / Máx: ${data.plazo_maximo_meses} meses`;
+                })
+                .catch(error => console.error('Error fetching loan type details:', error));
+        } else {
+            tasaInteresInput.value = '';
+            montoAyuda.textContent = '';
+            plazoAyuda.textContent = '';
+        }
+    });
+});
+</script>
 
 {% endblock %}

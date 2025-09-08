@@ -1,27 +1,87 @@
 {% extends 'base.html' %}
 
-{% block title %}Añadir Nuevo Cliente{% endblock %}
+{% block title %}{% if form.instance.pk %}Editar Cliente{% else %}Registrar Cliente{% endif %}{% endblock %}
 
 {% block content %}
-<header class="page-header">
-    <h1>Añadir Nuevo Cliente</h1>
-    <p>Rellena los campos para registrar un nuevo cliente en el sistema.</p>
+<header class="page-header mb-4">
+    <h1><i class="fa-solid fa-user-plus"></i> {% if form.instance.pk %}Editar Cliente{% else %}Registrar Cliente{% endif %}</h1>
+    <p class="text-muted">Rellena los campos para registrar o actualizar un cliente en el sistema.</p>
 </header>
 
-<div class="content-container">
-    <!-- El formulario envía los datos a la misma URL por el método POST -->
-    <form method="post" novalidate>
-        <!-- Token de seguridad de Django -->
-        {% csrf_token %}
-        
-        <!-- Renderizamos el formulario. `as_p` lo muestra como párrafos. -->
-        {{ form.as_p }}
-        
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Guardar Cliente</button>
-            <a href="{% url 'client_list' %}" class="btn btn-secondary">Cancelar</a>
-        </div>
-    </form>
+<div class="mb-4">
+    <a href="javascript:history.back()" class="btn btn-sm btn-outline-secondary">Volver</a>
 </div>
+
+<div class="card shadow">
+    <div class="card-body">
+        <!-- El formulario envía los datos a la misma URL por el método POST -->
+        <form method="post" novalidate>
+            <!-- Token de seguridad de Django -->
+            {% csrf_token %}
+
+            {% include 'includes/_messages.html' %}
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.nombres.id_for_label }}" class="form-label">{{ form.nombres.label }}</label>
+                    {{ form.nombres }}
+                    {% if form.nombres.errors %}<div class="invalid-feedback d-block">{{ form.nombres.errors.as_text }}</div>{% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.apellidos.id_for_label }}" class="form-label">{{ form.apellidos.label }}</label>
+                    {{ form.apellidos }}
+                    {% if form.apellidos.errors %}<div class="invalid-feedback d-block">{{ form.apellidos.errors.as_text }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.tipo_documento.id_for_label }}" class="form-label">{{ form.tipo_documento.label }}</label>
+                    {{ form.tipo_documento }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.numero_documento.id_for_label }}" class="form-label">{{ form.numero_documento.label }}</label>
+                    {{ form.numero_documento }}
+                    <small id="docHelp" class="form-text text-muted"></small>
+                    {% if form.numero_documento.errors %}<div class="invalid-feedback d-block">{{ form.numero_documento.errors.as_text }}</div>{% endif %}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.direccion.id_for_label }}" class="form-label">{{ form.direccion.label }}</label>
+                {{ form.direccion }}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.telefono.id_for_label }}" class="form-label">{{ form.telefono.label }}</label>
+                {{ form.telefono }}
+                {% if form.telefono.errors %}<div class="invalid-feedback d-block">{{ form.telefono.errors.as_text }}</div>{% endif %}
+            </div>
+            
+            <div class="form-actions border-top pt-3 mt-3">
+                <button type="submit" class="btn btn-primary">Guardar Cliente</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoDocumento = document.getElementById('{{ form.tipo_documento.id_for_label }}');
+    const docHelp = document.getElementById('docHelp');
+
+    function updateHelpText() {
+        if (tipoDocumento.value === 'cedula') {
+            docHelp.textContent = 'Debe contener 11 dígitos numéricos.';
+        } else if (tipoDocumento.value === 'pasaporte') {
+            docHelp.textContent = 'Debe contener 8 caracteres alfanuméricos.';
+        }
+    }
+
+    // Actualizar al cargar la página y al cambiar la selección
+    updateHelpText();
+    tipoDocumento.addEventListener('change', updateHelpText);
+});
+</script>
 
 {% endblock %}

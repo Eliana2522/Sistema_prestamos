@@ -1,0 +1,83 @@
+{% extends 'portal/base_portal.html' %}
+{% load humanize %}
+
+{% block title %}Mi Panel{% endblock %}
+
+{% block portal_content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-0">Hola, {{ cliente.nombres }}</h4>
+            <small class="text-muted">Bienvenido a tu portal de cliente.</small>
+        </div>
+        <form action="{% url 'client_logout' %}" method="post" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Cerrar Sesión</button>
+        </form>
+    </div>
+
+    <!-- Resumen del Préstamo Activo -->
+    {% if prestamo_activo %}
+        <div class="card text-white bg-primary mb-4">
+            <div class="card-header"><h5>Resumen de tu Préstamo Activo</h5></div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <p class="card-text mb-1"><small>Saldo Pendiente Total</small></p>
+                        <h4 class="card-title">${{ saldo_pendiente_total|intcomma }}</h4>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="card-text mb-1"><small>Próximo Pago</small></p>
+                        {% if proxima_cuota %}
+                            <h4 class="card-title">${{ proxima_cuota.monto_cuota|intcomma }}</h4>
+                        {% else %}
+                            <h4 class="card-title">N/A</h4>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <p class="card-text mb-1"><small>Fecha de Vencimiento</small></p>
+                        {% if proxima_cuota %}
+                            <h4 class="card-title">{{ proxima_cuota.fecha_vencimiento|date:"d M, Y" }}</h4>
+                        {% else %}
+                            <h4 class="card-title">-</h4>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Historial de Préstamos -->
+    <h5>Historial de Préstamos</h5>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Fecha Desembolso</th>
+                    <th>Monto Total</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prestamo in prestamos %}
+                <tr>
+                    <td>{{ prestamo.fecha_desembolso|date:"d/m/Y" }}</td>
+                    <td>${{ prestamo.monto|intcomma }}</td>
+                    <td>
+                        <span class="badge bg-{% if prestamo.estado == 'activo' %}success{% elif prestamo.estado == 'pagado' %}secondary{% else %}warning{% endif %} text-capitalize">
+                            {{ prestamo.get_estado_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{% url 'portal_loan_detail' prestamo.pk %}" class="btn btn-sm btn-outline-primary">Ver Detalles</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted">No tienes préstamos registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

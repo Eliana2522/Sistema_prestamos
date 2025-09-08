@@ -1,31 +1,42 @@
 {% extends 'base.html' %}
+{% load format_helpers %}
 {% load humanize %}
 
 {% block title %}Detalles del Préstamo{% endblock %}
 
 {% block content %}
+
 <header class="page-header">
     <div class="header-content">
-        <h1>Detalles del Préstamo #{{ prestamo.id }}</h1>
+        <h1>Detalles del Préstamo #{{ el_prestamo_actual.id }}</h1>
         <p>Información detallada del préstamo y su tabla de amortización.</p>
     </div>
     <div class="header-actions">
-        <a href="{% url 'payment_add' %}?loan_id={{ prestamo.id }}" class="btn btn-primary">Registrar Pago</a>
+        <a href="{% url 'payment_add' loan_id=el_prestamo_actual.id %}" class="btn btn-primary">Registrar Pago</a>
     </div>
 </header>
+
+        <div class="mb-4">
+    <a href="javascript:history.back()" class="btn btn-sm btn-outline-secondary">Volver</a>
+</div>
+
+{% include 'includes/_messages.html' %}
 
 <div class="content-container">
     <div class="loan-details">
         <h3>Información del Préstamo</h3>
-        <p><strong>Cliente:</strong> {{ prestamo.cliente.nombres }} {{ prestamo.cliente.apellidos }}</p>
-        <p><strong>Monto:</strong> ${{ prestamo.monto|intcomma }}</p>
-        <p><strong>Tasa de Interés:</strong> {{ prestamo.tasa_interes }}%</p>
-        <p><strong>Plazo:</strong> {{ prestamo.plazo }} meses</p>
-        <p><strong>Frecuencia de Pago:</strong> {{ prestamo.frecuencia_pago|capfirst }}</p>
-        <p><strong>Fecha de Desembolso:</strong> {{ prestamo.fecha_desembolso|date:"d/m/Y" }}</p>
-        <p><strong>Estado:</strong> {{ prestamo.estado|capfirst }}</p>
-        <p><strong>Ganancia Total Estimada:</strong> <span style="color: #28a745; font-weight: bold;">${{ ganancia_total|intcomma }}</span></p>
-        <p><strong>Monto Total Pagado:</strong> <span style="color: #007bff; font-weight: bold;">${{ total_pagado_real|intcomma }}</span></p>
+        <p><strong>Cliente:</strong> {{ el_prestamo_actual.cliente.nombres }} {{ el_prestamo_actual.cliente.apellidos }}</p>
+        <p><strong>Tipo de Préstamo:</strong> {{ el_prestamo_actual.tipo_prestamo.nombre|default:"N/A" }}</p>
+        <p><strong>Monto:</strong> ${{ el_prestamo_actual.monto }}</p>
+        <p><strong>Tasa de Interés:</strong> {{ el_prestamo_actual.tasa_interes }}%</p>
+        <p><strong>Plazo:</strong> {{ el_prestamo_actual.plazo }} meses</p>
+        <p><strong>Frecuencia de Pago:</strong> {{ el_prestamo_actual.frecuencia_pago|capfirst }}</p>
+        <p><strong>Fecha de Desembolso:</strong> {{ el_prestamo_actual.fecha_desembolso|date:"d/m/Y" }}</p>
+        <p><strong>Estado:</strong> {{ el_prestamo_actual.estado|capfirst }}</p>
+        <p><strong>Ganancia Total Estimada:</strong> <span style="color: #28a745; font-weight: bold;">${{ ganancia_estimada }}</span></p>
+        <p><strong>Monto Total Pagado:</strong> <span style="color: #007bff; font-weight: bold;">${{ pago_total_realizado }}</span></p>
+        <p><strong>Total Faltante:</strong> <span style="color: #dc3545; font-weight: bold;">${{ total_faltante|format_number }}</span></p>
+        <p><strong>Penalidad Acumulada:</strong> <span style="color: #dc3545; font-weight: bold;">${{ total_penalidades_acumuladas|format_number }}</span></p>
     </div>
 
     <h3 style="margin-top: 2rem;">Tabla de Amortización</h3>
@@ -39,17 +50,27 @@
                     <th>Capital</th>
                     <th>Interés</th>
                     <th>Saldo Pendiente</th>
+                    <th>Estado</th>
                 </tr>
             </thead>
             <tbody>
-                {% for cuota in tabla_amortizacion %}
+                {% for cuota in cuotas_del_prestamo %}
                 <tr>
                     <td>{{ cuota.numero_cuota }}</td>
                     <td>{{ cuota.fecha_vencimiento|date:"d/m/Y" }}</td>
-                    <td>${{ cuota.cuota_fija|intcomma }}</td>
-                    <td>${{ cuota.capital|intcomma }}</td>
-                    <td>${{ cuota.interes|intcomma }}</td>
-                    <td>${{ cuota.saldo_pendiente|intcomma }}</td>
+                    <td>${{ cuota.monto_cuota|floatformat:2 }}</td>
+                    <td>${{ cuota.capital|floatformat:2 }}</td>
+                    <td>${{ cuota.interes|floatformat:2 }}</td>
+                    <td>${{ cuota.saldo_pendiente|floatformat:2 }}</td>
+                    <td>
+                        {% if cuota.estado == 'pagada' %}
+                            <span class="badge bg-success"><i class="fa-solid fa-check"></i> Pagada</span>
+                        {% elif cuota.estado == 'pagada_parcialmente' %}
+                            <span class="badge bg-warning">Parcial</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Pendiente</span>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

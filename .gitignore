@@ -24,3 +24,6 @@ Thumbs.db
 # Archivos de IDEs
 .idea/
 .vscode/
+
+# Excluir ejecutables
+*.exe

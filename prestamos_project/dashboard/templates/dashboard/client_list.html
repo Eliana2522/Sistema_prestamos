@@ -9,9 +9,19 @@
         <p>Aquí puedes ver y gestionar todos tus clientes.</p>
     </div>
     <div class="header-actions">
+        <form method="get" action="{% url 'client_list' %}" class="search-form">
+            <input type="text" name="q" class="form-control" placeholder="Buscar por ID, nombre, cédula..." value="{{ query|default:'' }}">
+            <button type="submit" class="btn btn-secondary">Buscar</button>
+        </form>
         <a href="{% url 'client_add' %}" class="btn btn-primary">Añadir Nuevo Cliente</a>
     </div>
 </header>
+
+<div class="mb-4">
+    <a href="{% url 'panel_informativo' %}" class="btn btn-info">Volver al Panel</a>
+</div>
+
+{% include 'includes/_messages.html' %}
 
 <div class="content-container">
     <div class="table-responsive">
@@ -31,9 +41,9 @@
                 {% for cliente in clientes %}
                 <tr>
                     <td>{{ cliente.id }}</td>
-                    <td>{{ cliente.nombres }}</td>
-                    <td>{{ cliente.apellidos }}</td>
-                    <td>{{ cliente.cedula }}</td>
+                    <td><a href="{% url 'client_detail' cliente.pk %}">{{ cliente.nombres }}</a></td>
+                    <td><a href="{% url 'client_detail' cliente.pk %}">{{ cliente.apellidos }}</a></td>
+                    <td>{{ cliente.numero_documento }}</td>
                     <td>{{ cliente.telefono|default:"--" }}</td>
                     <td>{{ cliente.fecha_registro|date:"d/m/Y" }}</td>
                     <td>
@@ -48,6 +58,24 @@
             </tbody>
         </table>
     </div>
+</div>
+
+<div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; primera</a>
+            <a href="?page={{ page_obj.previous_page_number }}">anterior</a>
+        {% endif %}
+
+        <span class="current">
+            Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">siguiente</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">última &raquo;</a>
+        {% endif %}
+    </span>
 </div>
 
 {% endblock %}

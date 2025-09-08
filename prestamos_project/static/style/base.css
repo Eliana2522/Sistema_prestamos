@@ -18,9 +18,8 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #EAECEE; /* Fondo principal gris suave para dar contraste */
-    color: #333333; /* Color de texto principal */
-    /* Añade un padding superior al body para dejar espacio a la barra de navegación fija */
+    background-color: #f4f6f9; /* NUEVO: Fondo principal gris muy claro */
+    color: #34495e; /* NUEVO: Color de texto principal */
     padding-top: 60px; 
 }
 
@@ -33,23 +32,31 @@ body {
     align-items: center;
     padding: 0 20px;
     height: 60px;
-    background-color: #005A9C;
+    background-color: #2c3e50; /* NUEVO: Azul oscuro elegante */
     color: white;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 1000;
-    border-bottom: 3px solid #004B81;
+    border-bottom: 3px solid #233140; /* NUEVO: Borde más oscuro */
 }
 
 .top-navbar .logo {
     font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    font-weight: 600; /* Semi-bold para más presencia */
-    font-size: 1.6em;
-    letter-spacing: 1px; /* Espaciado para un look más refinado */
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.1); /* Sombra sutil para destacar */
+    font-weight: 700; /* Más audaz */
+    font-size: 1.8em; /* Ligeramente más grande */
+    letter-spacing: 1px;
+    /* Efecto de texto con degradado */
+    background: linear-gradient(45deg, #3498db, #1abc9c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+    /* Sombra sutil para levantar el texto */
+    text-shadow: 0px 0px 3px rgba(255, 255, 255, 0.2);
 }
+
 
 /* ================================================== */
 /* === NAVEGACIÓN DE USUARIO (MENÚ DESPLEGABLE) === */
@@ -79,7 +86,7 @@ body {
     position: absolute;
     right: 0;
     top: 100%;
-    background-color: #004B81;
+    background-color: #233140; /* NUEVO: Azul oscuro */
     min-width: 180px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
     z-index: 1;
@@ -104,7 +111,7 @@ body {
 }
 
 .user-nav .dropdown-menu li a:hover {
-    background-color: #003A6A;
+    background-color: #34495e; /* NUEVO: Gris azulado oscuro */
     color: white;
 }
 
@@ -131,7 +138,7 @@ body {
 }
 
 .logout-button:hover {
-    background-color: #003A6A;
+    background-color: #34495e; /* NUEVO: Gris azulado oscuro */
     color: white;
 }
 
@@ -140,8 +147,8 @@ body {
 /* === BARRA DE NAVEGACIÓN LATERAL (VERTICAL - TEMA CLARO) === */
 /* ==================================================== */
 .vertical-navbar {
-    width: 230px; /* Un poco más ancho */
-    background-color: #FFFFFF; /* Fondo blanco */
+    width: 230px;
+    background-color: #FFFFFF;
     color: #333;
     position: fixed;
     top: 60px;
@@ -151,7 +158,7 @@ body {
     box-sizing: border-box;
     z-index: 999;
     overflow-y: auto;
-    border-right: 1px solid #E9ECEF; /* Borde sutil para separar */
+    border-right: 1px solid #E9ECEF;
     transition: width 0.2s;
 }
 
@@ -166,21 +173,21 @@ body {
     align-items: center;
     gap: 15px;
     padding: 14px 25px;
-    color: #566573; /* Gris azulado para el texto */
+    color: #566573;
     text-decoration: none;
     font-weight: 500;
     transition: background-color 0.2s, color 0.2s;
 }
 
 .vertical-navbar ul li a:hover {
-    background-color: #F5F7FA; /* Fondo gris claro al pasar el mouse */
-    color: #005A9C; /* Texto azul principal */
+    background-color: #F5F7FA;
+    color: #3498db; /* NUEVO: Azul vibrante */
 }
 
 /* Estilo para el enlace activo */
 .vertical-navbar ul li a.active {
     background-color: #F5F7FA;
-    color: #005A9C;
+    color: #2c3e50; /* NUEVO: Azul oscuro */
     font-weight: 600;
 }
 
@@ -189,19 +196,19 @@ body {
     display: none;
     list-style: none;
     padding-left: 0;
-    background-color: #F8F9F9; /* Fondo ligeramente distinto para el submenú */
+    background-color: #F8F9F9;
 }
 
 .vertical-navbar ul.submenu li a {
     font-size: 14px;
     padding: 12px 20px;
-    padding-left: 45px; /* Mayor indentación */
+    padding-left: 45px;
     color: #566573;
     font-weight: 400;
 }
 
 .vertical-navbar ul.submenu li a:hover {
-    color: #005A9C;
+    color: #3498db; /* NUEVO: Azul vibrante */
 }
 
 .vertical-navbar ul.submenu.active {
@@ -216,14 +223,14 @@ body {
 
 .vertical-navbar ul li a:hover i,
 .vertical-navbar ul li a.active i {
-    color: #005A9C;
+    color: #2c3e50; /* NUEVO: Azul oscuro */
 }
 
 /* ========================= */
 /* === CONTENIDO PRINCIPAL === */
 /* ========================= */
 main {
-    margin-left: 230px; /* Ajustado al nuevo ancho de la barra lateral */
+    margin-left: 230px;
     padding: 25px;
 }
 
@@ -243,7 +250,7 @@ main {
     margin: 0;
     font-size: 2rem;
     font-weight: 600;
-    color: #005A9C;
+    color: #2c3e50; /* NUEVO: Azul oscuro */
 }
 
 .page-header p {
@@ -288,13 +295,13 @@ main {
 
 .btn-primary {
     color: #FFFFFF;
-    background-color: #005A9C;
-    border-color: #005A9C;
+    background-color: #3498db; /* NUEVO: Azul vibrante */
+    border-color: #3498db; /* NUEVO: Azul vibrante */
 }
 
 .btn-primary:hover {
-    background-color: #004B81;
-    border-color: #004B81;
+    background-color: #2980b9; /* NUEVO: Azul vibrante más oscuro */
+    border-color: #2980b9;
 }
 
 .btn-secondary {
@@ -333,7 +340,7 @@ main {
     border-bottom: 2px solid #DEE2E6;
     text-align: left;
     font-weight: 600;
-    color: #005A9C;
+    color: #2c3e50; /* NUEVO: Azul oscuro */
 }
 
 .table tbody tr:nth-of-type(odd) {
@@ -370,7 +377,7 @@ main {
     background-color: #fff;
     border-color: #80bdff;
     outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, .25); /* NUEVO: Sombra de foco con el nuevo azul */
 }
 
 form p > label {
@@ -386,6 +393,29 @@ form p > label {
     display: flex;
     gap: 1rem;
     justify-content: flex-end;
+}
+
+/* --- Search Form --- */
+.header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.search-form {
+    display: flex;
+    align-items: center;
+}
+
+.search-form .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: none;
+}
+
+.search-form .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
 }
 
 /* --- Tarjetas --- */
@@ -444,8 +474,6 @@ form p > label {
     gap: 1.5rem;
 }
 
-
-
 .column {
     background-color: white;
     border: 1px solid #E9ECEF;
@@ -455,13 +483,14 @@ form p > label {
 }
 
 .column h3 {
-    color: #005A9C;
+    color: #2c3e50; /* NUEVO: Azul oscuro */
     margin-top: 0;
     margin-bottom: 1rem;
     font-size: 1.2rem;
-    border-bottom: 2px solid #EAECEE;
+    border-bottom: 2px solid #f4f6f9; /* NUEVO: Gris claro */
     padding-bottom: 0.75rem;
 }
+
 
 /* --- Lista de Ingresos Recientes --- */
 .lista-ingresos {
@@ -501,4 +530,73 @@ form p > label {
     font-weight: 600;
     font-size: 1.1em;
     color: #28a745; /* Green color for income */
+}
+
+/* ==================================================== */
+/* === ESTILOS PARA TÍTULOS DE SECCIÓN EN LA NAVEGACIÓN === */
+/* ==================================================== */
+.nav-title {
+    padding: 1rem 1.5rem 0.5rem 1.5rem; /* Espaciado: arriba, lados, abajo */
+    margin-top: 0.5rem; /* Margen superior para separar de la sección anterior */
+    font-size: 0.8em; /* Tamaño de fuente pequeño */
+    font-weight: bold; /* Semi-negrita */
+    color: #85929E; /* Color gris sutil */
+    text-transform: uppercase; /* Mayúsculas */
+    letter-spacing: 0.05em; /* Espaciado entre letras */
+    display: flex; /* Para alinear el icono y el texto */
+    align-items: center; /* Centrado vertical */
+}
+
+.nav-title i {
+    color: #85929E; /* Mismo color que el texto para consistencia */
+    font-size: 1.1em; /* Ligeramente más grande que el texto */
+    margin-right: 0.5rem; /* Espacio entre el icono y el texto */
+}
+
+/* ==================================================== */
+/* === MEDIA QUERY PARA RESPONSIVIDAD === */
+/* ==================================================== */
+@media (max-width: 991.98px) {
+    main {
+        margin-left: 0;
+    }
+
+    .vertical-navbar {
+        /* En pantallas pequeñas, Bootstrap se encarga de ocultar esto en el offcanvas */
+        /* No necesitamos cambiar el ancho aquí */
+    }
+}
+
+/* ==================================================== */
+/* === ESTILOS ADICIONALES PARA LA BARRA LATERAL === */
+/* ==================================================== */
+
+/* Estilo para los títulos de sección */
+.nav-title {
+    padding: 1.5rem 1.5rem 0.75rem 1.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.8em;
+    font-weight: bold;
+    color: #95a5a6; /* Gris más oscuro para más contraste */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-top: 1px solid #eaedf1; /* Línea separadora sutil */
+}
+
+.nav-title:first-of-type {
+    border-top: none; /* No poner línea en el primer título */
+    margin-top: 0;
+}
+
+/* Colores de iconos por sección */
+.nav-section-gestion .nav-link i.fa-fw {
+    color: #3498db; /* Azul */
+}
+
+.nav-section-finanzas .nav-link i.fa-fw {
+    color: #2ecc71; /* Verde */
+}
+
+.nav-section-config .nav-link i.fa-fw {
+    color: #7f8c8d; /* Gris */
 }

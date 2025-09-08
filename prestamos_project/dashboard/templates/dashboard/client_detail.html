@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Perfil de {{ cliente.nombres }} {{ cliente.apellidos }}{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <!-- Título con el nombre del cliente -->
+    <h1>Perfil de Cliente: {{ cliente.nombres }} {{ cliente.apellidos }}</h1>
+    <p>{{ cliente.get_tipo_documento_display }}: {{ cliente.numero_documento }}</p>
+</header>
+
+<div class="mb-4">
+    <a href="javascript:history.back()" class="btn btn-sm btn-outline-secondary">Volver</a>
+</div>
+
+<!-- Sección para mostrar los detalles del cliente -->
+<section class="client-details-section">
+    <h2>Información de Contacto</h2>
+    <div class="details-grid">
+        <div class="detail-item">
+            <strong>Dirección:</strong>
+            <p>{{ cliente.direccion|default:"No especificada" }}</p>
+        </div>
+        <div class="detail-item">
+            <strong>Teléfono:</strong>
+            <p>{{ cliente.telefono|default:"No especificado" }}</p>
+        </div>
+        <div class="detail-item">
+            <strong>Fecha de Registro:</strong>
+            <p>{{ cliente.fecha_registro|date:"d M, Y" }}</p>
+        </div>
+    </div>
+</section>
+
+<!-- Sección para mostrar el historial de préstamos -->
+<section class="loan-history-section">
+    <h2>Historial de Préstamos</h2>
+    <div class="table-container table-responsive">
+        <table class="table table-striped table-hover table-bordered">
+            <thead>
+                <tr>
+                    <th>ID Préstamo</th>
+                    <th>Monto</th>
+                    <th>Plazo</th>
+                    <th>Tasa de Interés</th>
+                    <th>Fecha de Desembolso</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prestamo in prestamos %}
+                <tr>
+                    <td>{{ prestamo.id }}</td>
+                    <td>${{ prestamo.monto|intcomma|floatformat:2 }}</td>
+                    <td>{{ prestamo.plazo }} meses</td>
+                    <td>{{ prestamo.tasa_interes|floatformat:2 }}%</td>
+                    <td>{{ prestamo.fecha_desembolso|date:"d M, Y" }}</td>
+                    <td>
+                        <!-- Etiqueta de estado con color según el estado del préstamo -->
+                        <span class="status-badge status-{{ prestamo.estado }}">{{ prestamo.get_estado_display }}</span>
+                    </td>
+                    <td>
+                        <!-- Enlace para ver los detalles completos del préstamo -->
+                        <a href="{% url 'loan_detail' prestamo.pk %}" class="action-link">Ver Detalles</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">Este cliente no tiene préstamos registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
