@@ -20,32 +20,50 @@
             <!-- Sección de Detalles del Préstamo -->
             <section class="mb-5">
                 <h4 class="mb-3">1. Detalles del Préstamo</h4>
+                
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                {% endif %}
+
                 <div class="row">
-                    <div class="col-md-6 mb-3">{{ form.cliente.label_tag }} {{ form.cliente }}</div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.cliente.label_tag }}
+                        {{ form.cliente }}
+                        {% if form.cliente.errors %}<div class="invalid-feedback d-block">{{ form.cliente.errors }}</div>{% endif %}
+                    </div>
                     <div class="col-md-6 mb-3">
                         {{ form.tipo_prestamo.label_tag }}
                         {{ form.tipo_prestamo }}
+                        {% if form.tipo_prestamo.errors %}<div class="invalid-feedback d-block">{{ form.tipo_prestamo.errors }}</div>{% endif %}
                     </div>
                     <div class="col-md-6 mb-3">
                         {{ form.monto.label_tag }}
                         {{ form.monto }}
                         <small id="monto-ayuda" class="form-text text-muted"></small>
+                        {% if form.monto.errors %}<div class="invalid-feedback d-block">{{ form.monto.errors }}</div>{% endif %}
                     </div>
                     <div class="col-md-6 mb-3">
                         {{ form.tasa_interes.label_tag }}
                         {{ form.tasa_interes }}
+                        {% if form.tasa_interes.errors %}<div class="invalid-feedback d-block">{{ form.tasa_interes.errors }}</div>{% endif %}
                     </div>
                     <div class="col-md-6 mb-3">
                         {{ form.plazo.label_tag }}
                         {{ form.plazo }}
                         <small id="plazo-ayuda" class="form-text text-muted"></small>
+                        {% if form.plazo.errors %}<div class="invalid-feedback d-block">{{ form.plazo.errors }}</div>{% endif %}
                     </div>
-                    <div class="col-md-6 mb-3">{{ form.frecuencia_pago.label_tag }} {{ form.frecuencia_pago }}</div>
-                    <div class="col-md-6 mb-3">{{ form.fecha_desembolso.label_tag }} {{ form.fecha_desembolso }}</div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.frecuencia_pago.label_tag }}
+                        {{ form.frecuencia_pago }}
+                        {% if form.frecuencia_pago.errors %}<div class="invalid-feedback d-block">{{ form.frecuencia_pago.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.fecha_desembolso.label_tag }}
+                        {{ form.fecha_desembolso }}
+                        {% if form.fecha_desembolso.errors %}<div class="invalid-feedback d-block">{{ form.fecha_desembolso.errors }}</div>{% endif %}
+                    </div>
                 </div>
-                {% if form.non_field_errors %}
-                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
-                {% endif %}
             </section>
 
             <!-- Sección de Gastos Asociados -->
