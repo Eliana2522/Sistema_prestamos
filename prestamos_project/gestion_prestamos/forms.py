@@ -160,7 +160,7 @@ class PagoForm(forms.Form):
         decimal_places=2, 
         widget=forms.NumberInput(attrs={'class': 'form-control'})
     )
-antiaForm(forms.ModelForm):
+class GarantiaForm(forms.ModelForm):
     class Meta:
         model = Garantia
         fields = ['descripcion', 'valor_estimado']
