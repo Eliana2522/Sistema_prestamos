@@ -89,6 +89,26 @@
                 <button type="button" id="add-gasto-form" class="btn btn-outline-primary btn-sm mt-2"><i class="fa-solid fa-plus"></i> Añadir Otro Gasto</button>
             </section>
 
+            <!-- Sección de Garantías (Condicional) -->
+            <section id="garantias-section" class="mb-5" style="display: none;">
+                <h4 class="mb-3">3. Garantías (Requerido para montos > $100,000)</h4>
+                <p class="text-muted small">Añada una o más garantías para respaldar el préstamo.</p>
+                
+                {{ garantia_formset.management_form }}
+                <div id="garantia-forms-container">
+                    {% for form in garantia_formset %}
+                        <div class="row align-items-center garantia-form mb-2">
+                            <div class="col-md-6">{{ form.descripcion }}</div>
+                            <div class="col-md-5">{{ form.valor_estimado }}</div>
+                            <div class="col-md-1">
+                                {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="button" id="add-garantia-form" class="btn btn-outline-primary btn-sm mt-2"><i class="fa-solid fa-plus"></i> Añadir Garantía</button>
+            </section>
+
             <!-- Acciones del Formulario -->
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary btn-lg">Registrar Préstamo</button>
@@ -109,28 +129,76 @@
     </div>
 </div>
 
+<!-- Plantilla para nuevos formularios de garantías (oculta) -->
+<div id="garantia-form-template" style="display: none;">
+    <div class="row align-items-center garantia-form mb-2" id="garantia-form-__prefix__">
+        <div class="col-md-6">{{ garantia_formset.empty_form.descripcion }}</div>
+        <div class="col-md-5">{{ garantia_formset.empty_form.valor_estimado }}</div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-danger btn-sm remove-garantia-form">Eliminar</button>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // --- LÓGICA PARA GASTOS DINÁMICOS ---
-    const container = document.getElementById('gasto-forms-container');
-    const addButton = document.getElementById('add-gasto-form');
-    const template = document.getElementById('gasto-form-template').innerHTML;
-    const totalForms = document.getElementById('id_gastoprestamo_set-TOTAL_FORMS');
-    let formNum = {{ gasto_formset.total_form_count }};
+    const gastoContainer = document.getElementById('gasto-forms-container');
+    const addGastoButton = document.getElementById('add-gasto-form');
+    const gastoTemplate = document.getElementById('gasto-form-template').innerHTML;
+    const totalGastoForms = document.getElementById('id_gastos-TOTAL_FORMS');
+    let gastoFormNum = {{ gasto_formset.total_form_count }};
 
-    addButton.addEventListener('click', function() {
-        const newForm = template.replace(/__prefix__/g, formNum);
+    addGastoButton.addEventListener('click', function() {
+        const newForm = gastoTemplate.replace(/__prefix__/g, gastoFormNum);
         const div = document.createElement('div');
         div.innerHTML = newForm;
-        container.appendChild(div.firstElementChild);
-        totalForms.value = parseInt(totalForms.value) + 1;
-        formNum++;
+        gastoContainer.appendChild(div.firstElementChild);
+        totalGastoForms.value = parseInt(totalGastoForms.value) + 1;
+        gastoFormNum++;
     });
 
-    container.addEventListener('click', function(e) {
+    gastoContainer.addEventListener('click', function(e) {
         if (e.target && e.target.classList.contains('remove-gasto-form')) {
             e.target.closest('.gasto-form').remove();
-            totalForms.value = parseInt(totalForms.value) - 1;
+            totalGastoForms.value = parseInt(totalGastoForms.value) - 1;
+        }
+    });
+
+    // --- LÓGICA PARA GARANTÍAS DINÁMICAS ---
+    const garantiasSection = document.getElementById('garantias-section');
+    const montoInput = document.getElementById('id_monto');
+
+    function toggleGarantiasSection() {
+        if (parseFloat(montoInput.value) > 100000) {
+            garantiasSection.style.display = 'block';
+        } else {
+            garantiasSection.style.display = 'none';
+        }
+    }
+
+    montoInput.addEventListener('input', toggleGarantiasSection);
+    toggleGarantiasSection(); // Check on page load
+
+    const garantiaContainer = document.getElementById('garantia-forms-container');
+    const addGarantiaButton = document.getElementById('add-garantia-form');
+    const garantiaTemplate = document.getElementById('garantia-form-template').innerHTML;
+    const totalGarantiaForms = document.getElementById('id_garantias-TOTAL_FORMS');
+    let garantiaFormNum = {{ garantia_formset.total_form_count }};
+
+    addGarantiaButton.addEventListener('click', function() {
+        const newForm = garantiaTemplate.replace(/__prefix__/g, garantiaFormNum);
+        const div = document.createElement('div');
+        div.innerHTML = newForm;
+        garantiaContainer.appendChild(div.firstElementChild);
+        totalGarantiaForms.value = parseInt(totalGarantiaForms.value) + 1;
+        garantiaFormNum++;
+    });
+
+    garantiaContainer.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('remove-garantia-form')) {
+            e.target.closest('.garantia-form').remove();
+            totalGarantiaForms.value = parseInt(totalGarantiaForms.value) - 1;
         }
     });
 

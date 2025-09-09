@@ -1,5 +1,5 @@
 from django import forms
-from .models import Cliente, Prestamo, Pago, Cuota, TipoPrestamo, GastoPrestamo, TipoGasto
+from .models import Cliente, Prestamo, Pago, Cuota, TipoPrestamo, GastoPrestamo, TipoGasto, Garantia
 from django_select2.forms import Select2Widget
 from datetime import date
 import re
@@ -160,3 +160,11 @@ class PagoForm(forms.Form):
         decimal_places=2, 
         widget=forms.NumberInput(attrs={'class': 'form-control'})
     )
+antiaForm(forms.ModelForm):
+    class Meta:
+        model = Garantia
+        fields = ['descripcion', 'valor_estimado']
+        widgets = {
+            'descripcion': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Descripción de la garantía'}),
+            'valor_estimado': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Valor estimado'}),
+        }

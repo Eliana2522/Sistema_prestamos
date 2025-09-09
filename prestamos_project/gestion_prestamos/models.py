@@ -357,3 +357,21 @@ class Capital(models.Model):
         db_table = 'prestamos_capital'
         verbose_name = "Capital de la Empresa"
         verbose_name_plural = "Capital de la Empresa"
+
+
+# ==================================================
+# === MODELO GARANTIA ===
+# ==================================================
+# Almacena las garantías asociadas a un préstamo.
+class Garantia(models.Model):
+    prestamo = models.ForeignKey(Prestamo, on_delete=models.CASCADE, related_name='garantias')
+    descripcion = models.CharField(max_length=255, help_text="Descripción de la garantía (ej: Vehículo Toyota Camry 2015, Hipoteca de la propiedad en...")
+    valor_estimado = models.DecimalField(max_digits=12, decimal_places=2, help_text="Valor estimado de la garantía en el mercado")
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Garantía para Préstamo #{self.prestamo.id}: {self.descripcion}"
+
+    class Meta:
+        verbose_name = "Garantía"
+        verbose_name_plural = "Garantías"
