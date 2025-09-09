@@ -11,21 +11,26 @@ django.setup()
 from django.db import connection
 
 def reset_database():
-    print("--- Iniciando reseteo de la base de datos ---")
-
-    print("\n--- Reiniciando IDs de las tablas ---")
+    print("--- Iniciando reseteo COMPLETO de la base de datos ---")
     with connection.cursor() as cursor:
-        print("Truncando tablas de PostgreSQL...")
-        # El comando TRUNCATE borra todos los datos y reinicia los contadores de ID.
-        # CASCADE se encarga de borrar también los datos en tablas relacionadas.
-        cursor.execute("TRUNCATE TABLE prestamos_pago, prestamos_cuota, prestamos_prestamo, prestamos_cliente, prestamos_tipo_prestamo RESTART IDENTITY CASCADE;")
-        print("Tablas de PostgreSQL reseteadas.")
+        print("Obteniendo todas las tablas...")
+        # Get all table names
+        cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name LIKE 'prestamos_%%' OR table_name LIKE 'django_%%' OR table_name LIKE 'auth_%%'")
+        tables = [row[0] for row in cursor.fetchall()]
+        
+        # Drop all tables
+        if tables:
+            print(f"Borrando las siguientes tablas: {tables}")
+            cursor.execute(f"DROP TABLE IF EXISTS {', '.join(tables)} CASCADE;")
+            print("Tablas borradas.")
+        else:
+            print("No se encontraron tablas para borrar.")
 
     print("\n--- Reseteo completado ---")
 
 if __name__ == '__main__':
     # Advertencia de seguridad
-    confirmacion = input("¡ADVERTENCIA! Estás a punto de borrar TODOS los datos de clientes, préstamos, cuotas y pagos de forma irreversible. ¿Estás seguro de que quieres continuar? (escribe 'si' para confirmar): ")
+    confirmacion = input("¡ADVERTENCIA! Estás a punto de borrar TODAS las tablas de la base de datos de forma irreversible. ¿Estás seguro de que quieres continuar? (escribe 'si' para confirmar): ")
     if confirmacion.lower() == 'si':
         reset_database()
     else:

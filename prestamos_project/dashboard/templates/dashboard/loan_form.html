@@ -16,6 +16,7 @@
     <div class="content-container">
         <form method="post" id="loan-form">
             {% csrf_token %}
+            {% include 'includes/_messages.html' %}
             
             <!-- Sección de Detalles del Préstamo -->
             <section class="mb-5">
