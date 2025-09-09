@@ -360,18 +360,23 @@ class Capital(models.Model):
 
 
 # ==================================================
-# === MODELO GARANTIA ===
+# === MODELO REQUISITO ===
 # ==================================================
-# Almacena las garantías asociadas a un préstamo.
-class Garantia(models.Model):
-    prestamo = models.ForeignKey(Prestamo, on_delete=models.CASCADE, related_name='garantias')
-    descripcion = models.CharField(max_length=255, help_text="Descripción de la garantía (ej: Vehículo Toyota Camry 2015, Hipoteca de la propiedad en...")
-    valor_estimado = models.DecimalField(max_digits=12, decimal_places=2, help_text="Valor estimado de la garantía en el mercado")
+# Almacena los requisitos o garantías asociadas a un préstamo.
+class Requisito(models.Model):
+    TIPO_CHOICES = [
+        ('garantia', 'Garantía Monetaria'),
+        ('documento', 'Documento/Requisito'),
+    ]
+    prestamo = models.ForeignKey(Prestamo, on_delete=models.CASCADE, related_name='requisitos')
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default='documento', verbose_name="Tipo de Requisito")
+    descripcion = models.CharField(max_length=255, help_text="Descripción del requisito (ej: Matrícula universitaria, Título de propiedad, etc.)")
+    valor_estimado = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="Valor estimado (solo si aplica, para garantías monetarias)")
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Garantía para Préstamo #{self.prestamo.id}: {self.descripcion}"
+        return f"Requisito para Préstamo #{self.prestamo.id}: {self.descripcion}"
 
     class Meta:
-        verbose_name = "Garantía"
-        verbose_name_plural = "Garantías"
+        verbose_name = "Requisito"
+        verbose_name_plural = "Requisitos"

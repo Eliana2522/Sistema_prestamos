@@ -79,9 +79,7 @@
                             <div class="col-md-3">{{ form.monto }}</div>
                             <div class="col-md-4">{{ form.descripcion }}</div>
                             <div class="col-md-1">
-                                {% if form.instance.pk %}
-                                    {{ form.DELETE.label_tag }} {{ form.DELETE }}
-                                {% endif %}
+                                {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
                             </div>
                         </div>
                     {% endfor %}
@@ -89,24 +87,25 @@
                 <button type="button" id="add-gasto-form" class="btn btn-outline-primary btn-sm mt-2"><i class="fa-solid fa-plus"></i> Añadir Otro Gasto</button>
             </section>
 
-            <!-- Sección de Garantías (Condicional) -->
-            <section id="garantias-section" class="mb-5" style="display: none;">
-                <h4 class="mb-3">3. Garantías (Requerido para montos > $100,000)</h4>
-                <p class="text-muted small">Añada una o más garantías para respaldar el préstamo.</p>
+            <!-- Sección de Requisitos/Garantías (Condicional) -->
+            <section id="requisitos-section" class="mb-5" style="display: none;">
+                <h4 class="mb-3">3. Requisitos y Garantías</h4>
+                <p class="text-muted small">Este tipo de préstamo requiere que se adjunten los siguientes documentos o garantías.</p>
                 
-                {{ garantia_formset.management_form }}
-                <div id="garantia-forms-container">
-                    {% for form in garantia_formset %}
-                        <div class="row align-items-center garantia-form mb-2">
-                            <div class="col-md-6">{{ form.descripcion }}</div>
-                            <div class="col-md-5">{{ form.valor_estimado }}</div>
+                {{ requisito_formset.management_form }}
+                <div id="requisito-forms-container">
+                    {% for form in requisito_formset %}
+                        <div class="row align-items-center requisito-form mb-2">
+                            <div class="col-md-3">{{ form.tipo }}</div>
+                            <div class="col-md-5">{{ form.descripcion }}</div>
+                            <div class="col-md-3">{{ form.valor_estimado }}</div>
                             <div class="col-md-1">
                                 {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
                             </div>
                         </div>
                     {% endfor %}
                 </div>
-                <button type="button" id="add-garantia-form" class="btn btn-outline-primary btn-sm mt-2"><i class="fa-solid fa-plus"></i> Añadir Garantía</button>
+                <button type="button" id="add-requisito-form" class="btn btn-outline-primary btn-sm mt-2"><i class="fa-solid fa-plus"></i> Añadir Requisito</button>
             </section>
 
             <!-- Acciones del Formulario -->
@@ -129,13 +128,14 @@
     </div>
 </div>
 
-<!-- Plantilla para nuevos formularios de garantías (oculta) -->
-<div id="garantia-form-template" style="display: none;">
-    <div class="row align-items-center garantia-form mb-2" id="garantia-form-__prefix__">
-        <div class="col-md-6">{{ garantia_formset.empty_form.descripcion }}</div>
-        <div class="col-md-5">{{ garantia_formset.empty_form.valor_estimado }}</div>
+<!-- Plantilla para nuevos formularios de requisitos (oculta) -->
+<div id="requisito-form-template" style="display: none;">
+    <div class="row align-items-center requisito-form mb-2" id="requisito-form-__prefix__">
+        <div class="col-md-3">{{ requisito_formset.empty_form.tipo }}</div>
+        <div class="col-md-5">{{ requisito_formset.empty_form.descripcion }}</div>
+        <div class="col-md-3">{{ requisito_formset.empty_form.valor_estimado }}</div>
         <div class="col-md-1">
-            <button type="button" class="btn btn-danger btn-sm remove-garantia-form">Eliminar</button>
+            <button type="button" class="btn btn-danger btn-sm remove-requisito-form">Eliminar</button>
         </div>
     </div>
 </div>
@@ -165,48 +165,35 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // --- LÓGICA PARA GARANTÍAS DINÁMICAS ---
-    const garantiasSection = document.getElementById('garantias-section');
-    const montoInput = document.getElementById('id_monto');
+    // --- LÓGICA PARA REQUISITOS DINÁMICOS ---
+    const requisitoContainer = document.getElementById('requisito-forms-container');
+    const addRequisitoButton = document.getElementById('add-requisito-form');
+    const requisitoTemplate = document.getElementById('requisito-form-template').innerHTML;
+    const totalRequisitoForms = document.getElementById('id_requisitos-TOTAL_FORMS');
+    let requisitoFormNum = {{ requisito_formset.total_form_count }};
 
-    function toggleGarantiasSection() {
-        if (parseFloat(montoInput.value) > 100000) {
-            garantiasSection.style.display = 'block';
-        } else {
-            garantiasSection.style.display = 'none';
-        }
-    }
-
-    montoInput.addEventListener('input', toggleGarantiasSection);
-    toggleGarantiasSection(); // Check on page load
-
-    const garantiaContainer = document.getElementById('garantia-forms-container');
-    const addGarantiaButton = document.getElementById('add-garantia-form');
-    const garantiaTemplate = document.getElementById('garantia-form-template').innerHTML;
-    const totalGarantiaForms = document.getElementById('id_garantias-TOTAL_FORMS');
-    let garantiaFormNum = {{ garantia_formset.total_form_count }};
-
-    addGarantiaButton.addEventListener('click', function() {
-        const newForm = garantiaTemplate.replace(/__prefix__/g, garantiaFormNum);
+    addRequisitoButton.addEventListener('click', function() {
+        const newForm = requisitoTemplate.replace(/__prefix__/g, requisitoFormNum);
         const div = document.createElement('div');
         div.innerHTML = newForm;
-        garantiaContainer.appendChild(div.firstElementChild);
-        totalGarantiaForms.value = parseInt(totalGarantiaForms.value) + 1;
-        garantiaFormNum++;
+        requisitoContainer.appendChild(div.firstElementChild);
+        totalRequisitoForms.value = parseInt(totalRequisitoForms.value) + 1;
+        requisitoFormNum++;
     });
 
-    garantiaContainer.addEventListener('click', function(e) {
-        if (e.target && e.target.classList.contains('remove-garantia-form')) {
-            e.target.closest('.garantia-form').remove();
-            totalGarantiaForms.value = parseInt(totalGarantiaForms.value) - 1;
+    requisitoContainer.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('remove-requisito-form')) {
+            e.target.closest('.requisito-form').remove();
+            totalRequisitoForms.value = parseInt(totalRequisitoForms.value) - 1;
         }
     });
 
-    // --- LÓGICA PARA DETALLES DE TIPO DE PRÉSTAMO ---
+    // --- LÓGICA PARA DETALLES DE TIPO DE PRÉSTAMO Y VISIBILIDAD DE REQUISITOS ---
     const tipoPrestamoSelect = document.getElementById('id_tipo_prestamo');
     const tasaInteresInput = document.getElementById('id_tasa_interes');
     const montoAyuda = document.getElementById('monto-ayuda');
     const plazoAyuda = document.getElementById('plazo-ayuda');
+    const requisitosSection = document.getElementById('requisitos-section');
 
     tipoPrestamoSelect.addEventListener('change', function() {
         const tipoPrestamoId = this.value;
@@ -217,14 +204,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     tasaInteresInput.value = data.tasa_interes_predeterminada;
                     montoAyuda.textContent = `Mín: ${data.monto_minimo} / Máx: ${data.monto_maximo}`;
                     plazoAyuda.textContent = `Mín: ${data.plazo_minimo_meses} meses / Máx: ${data.plazo_maximo_meses} meses`;
+                    
+                    // Mostrar u ocultar la sección de requisitos
+                    if (data.requiere_garantia) {
+                        requisitosSection.style.display = 'block';
+                    } else {
+                        requisitosSection.style.display = 'none';
+                    }
                 })
                 .catch(error => console.error('Error fetching loan type details:', error));
         } else {
             tasaInteresInput.value = '';
             montoAyuda.textContent = '';
             plazoAyuda.textContent = '';
+            requisitosSection.style.display = 'none';
         }
     });
+    
+    // Disparar el evento change al cargar la página si ya hay un valor seleccionado
+    if (tipoPrestamoSelect.value) {
+        tipoPrestamoSelect.dispatchEvent(new Event('change'));
+    }
 });
 </script>
 

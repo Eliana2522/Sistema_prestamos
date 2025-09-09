@@ -3,8 +3,8 @@ from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Value, DecimalField, Count, F, Q
 from django.db.models.functions import Coalesce
-from gestion_prestamos.forms import ClienteForm, PrestamoForm, PagoForm, TipoPrestamoForm, GastoPrestamoForm, GarantiaForm
-from gestion_prestamos.models import Prestamo, Cliente, Pago, Cuota, TipoPrestamo, Capital, GastoPrestamo, TipoGasto, Garantia
+from gestion_prestamos.forms import ClienteForm, PrestamoForm, PagoForm, TipoPrestamoForm, GastoPrestamoForm, RequisitoForm
+from gestion_prestamos.models import Prestamo, Cliente, Pago, Cuota, TipoPrestamo, Capital, GastoPrestamo, TipoGasto, Requisito
 from django.forms import modelformset_factory
 from gestion_prestamos.utils import calcular_tabla_amortizacion, calcular_penalidad_cuota
 from django.contrib import messages
@@ -156,34 +156,26 @@ def client_detail(request, pk):
 
 @login_required
 def loan_add(request):
-    """Maneja la creación de un nuevo préstamo, incluyendo gastos y garantías."""
+    """Maneja la creación de un nuevo préstamo, incluyendo gastos y requisitos."""
     GastoFormSet = modelformset_factory(GastoPrestamo, form=GastoPrestamoForm, extra=1, can_delete=True)
-    GarantiaFormSet = modelformset_factory(Garantia, form=GarantiaForm, extra=0, can_delete=True) # extra=0, se añaden con JS
+    RequisitoFormSet = modelformset_factory(Requisito, form=RequisitoForm, extra=0, can_delete=True)
 
     if request.method == 'POST':
         form = PrestamoForm(request.POST)
         gasto_formset = GastoFormSet(request.POST, queryset=GastoPrestamo.objects.none(), prefix='gastos')
-        garantia_formset = GarantiaFormSet(request.POST, queryset=Garantia.objects.none(), prefix='garantias')
+        requisito_formset = RequisitoFormSet(request.POST, queryset=Requisito.objects.none(), prefix='requisitos')
 
-        cliente_id = request.POST.get('cliente')
-        if cliente_id:
-            cliente = get_object_or_404(Cliente, pk=cliente_id)
-            if Prestamo.objects.filter(cliente=cliente, estado='activo').exists():
-                messages.error(request, f'El cliente {cliente} ya tiene un préstamo activo.')
-                # If validation fails, we must re-render the page with the forms that contain the errors
-                context = {'form': form, 'gasto_formset': gasto_formset, 'garantia_formset': garantia_formset}
-                return render(request, 'dashboard/loan_form.html', context)
-
-        if form.is_valid() and gasto_formset.is_valid() and garantia_formset.is_valid():
-            monto_solicitado = form.cleaned_data['monto']
+        if form.is_valid() and gasto_formset.is_valid() and requisito_formset.is_valid():
+            tipo_prestamo = form.cleaned_data.get('tipo_prestamo')
             
-            # Validar que si el monto es > 100,000, se requiera al menos una garantía
-            if monto_solicitado > Decimal('100000'):
-                if not any(form.cleaned_data and not form.cleaned_data.get('DELETE') for form in garantia_formset):
-                    messages.error(request, 'Para préstamos mayores a $100,000.00, se requiere al menos una garantía.')
-                    context = {'form': form, 'gasto_formset': gasto_formset, 'garantia_formset': garantia_formset}
+            # Validar que si el tipo de préstamo requiere garantía, se provea al menos una.
+            if tipo_prestamo and tipo_prestamo.requiere_garantia:
+                if not any(form.cleaned_data and not form.cleaned_data.get('DELETE') for form in requisito_formset):
+                    messages.error(request, f'El tipo de préstamo "{tipo_prestamo.nombre}" requiere al menos un requisito o garantía.')
+                    context = {'form': form, 'gasto_formset': gasto_formset, 'requisito_formset': requisito_formset}
                     return render(request, 'dashboard/loan_form.html', context)
 
+            monto_solicitado = form.cleaned_data['monto']
             total_gastos = Decimal('0.00')
             for gasto_form in gasto_formset.cleaned_data:
                 if gasto_form and not gasto_form.get('DELETE'):
@@ -200,12 +192,12 @@ def loan_add(request):
                     gasto.prestamo = prestamo
                     gasto.save()
 
-            # Guardar garantías
-            for garantia_form in garantia_formset:
-                if garantia_form.is_valid() and garantia_form.cleaned_data and not garantia_form.cleaned_data.get('DELETE'):
-                    garantia = garantia_form.save(commit=False)
-                    garantia.prestamo = prestamo
-                    garantia.save()
+            # Guardar requisitos/garantías
+            for requisito_form in requisito_formset:
+                if requisito_form.is_valid() and requisito_form.cleaned_data and not requisito_form.cleaned_data.get('DELETE'):
+                    requisito = requisito_form.save(commit=False)
+                    requisito.prestamo = prestamo
+                    requisito.save()
 
             tabla_amortizacion = calcular_tabla_amortizacion(prestamo)
             for item_cuota in tabla_amortizacion:
@@ -219,23 +211,22 @@ def loan_add(request):
                     saldo_pendiente=item_cuota['saldo_pendiente']
                 )
             
-            messages.success(request, f'Préstamo de ${prestamo.monto:,.2f} (Monto Solicitado: ${monto_solicitado:,.2f} + Gastos: ${total_gastos:,.2f}) registrado exitosamente!')
+            messages.success(request, f'Préstamo de ${prestamo.monto:,.2f} registrado exitosamente!')
             return redirect('loan_list')
         else:
-            # If forms are not valid, re-render the page with the forms containing errors
             messages.error(request, 'Por favor, corrige los errores en el formulario.')
-            context = {'form': form, 'gasto_formset': gasto_formset, 'garantia_formset': garantia_formset}
+            context = {'form': form, 'gasto_formset': gasto_formset, 'requisito_formset': requisito_formset}
             return render(request, 'dashboard/loan_form.html', context)
 
     else: # GET request
         form = PrestamoForm()
         gasto_formset = GastoFormSet(queryset=GastoPrestamo.objects.none(), prefix='gastos')
-        garantia_formset = GarantiaFormSet(queryset=Garantia.objects.none(), prefix='garantias')
+        requisito_formset = RequisitoFormSet(queryset=Requisito.objects.none(), prefix='requisitos')
 
     context = {
         'form': form,
         'gasto_formset': gasto_formset,
-        'garantia_formset': garantia_formset
+        'requisito_formset': requisito_formset
     }
     return render(request, 'dashboard/loan_form.html', context)
 
@@ -399,6 +390,7 @@ def get_tipo_prestamo_details(request, pk):
         'monto_maximo': tipo_prestamo.monto_maximo,
         'plazo_minimo_meses': tipo_prestamo.plazo_minimo_meses,
         'plazo_maximo_meses': tipo_prestamo.plazo_maximo_meses,
+        'requiere_garantia': tipo_prestamo.requiere_garantia,
     }
     return JsonResponse(data)
 
