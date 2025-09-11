@@ -305,27 +305,42 @@ def loan_detail(request, pk):
     """Muestra los detalles de un préstamo específico y sus cuotas."""
     prestamo = get_object_or_404(Prestamo, pk=pk)
     cuotas = prestamo.cuotas.all().order_by('numero_cuota')
+    hoy = timezone.now().date()
+
+    # Bucle para calcular penalidades y estado de cada cuota ANTES de agregar
+    total_faltante = Decimal('0.00')
+    for cuota in cuotas:
+        cuota.is_overdue = cuota.fecha_vencimiento < hoy and cuota.estado in ['pendiente', 'pagada_parcialmente']
+        calcular_penalidad_cuota(cuota) # Esto actualiza el monto de penalidad en la BD
+        if cuota.estado != 'pagada':
+            total_faltante += (cuota.monto_total_a_pagar - cuota.total_pagado)
+
+    # Ahora que las penalidades están actualizadas, agregamos los totales
+    totales_amortizacion = cuotas.aggregate(
+        total_cuota=Coalesce(Sum('monto_cuota'), Value(0), output_field=DecimalField()),
+        total_capital=Coalesce(Sum('capital'), Value(0), output_field=DecimalField()),
+        total_interes=Coalesce(Sum('interes'), Value(0), output_field=DecimalField()),
+        total_penalidad=Coalesce(Sum('monto_penalidad_acumulada'), Value(0), output_field=DecimalField())
+    )
+    # El total a pagar es la suma de las cuotas más las penalidades
+    totales_amortizacion['total_a_pagar'] = totales_amortizacion['total_cuota'] + totales_amortizacion['total_penalidad']
+
+    # La ganancia estimada es el interés total del préstamo
+    ganancia_estimada = totales_amortizacion['total_interes']
+    # El total de penalidades viene de la agregación
+    total_penalidades_acumuladas = totales_amortizacion['total_penalidad']
+
+    # El total pagado no cambia
     total_pagado = Pago.objects.filter(cuota__prestamo=prestamo).aggregate(
         total=Coalesce(Sum('monto_pagado'), Value(0), output_field=DecimalField())
     )['total']
-    ganancia_potencial = cuotas.aggregate(
-        total_interes=Coalesce(Sum('interes'), Value(0), output_field=DecimalField())
-    )['total_interes']
-
-    total_faltante = Decimal('0.00')
-    total_penalidades_acumuladas = Decimal('0.00')
-    for cuota in cuotas:
-        calcular_penalidad_cuota(cuota)
-        total_penalidades_acumuladas += cuota.monto_penalidad_acumulada
-        if cuota.estado != 'pagada':
-            cuota_total_pagado = cuota.total_pagado if cuota.total_pagado is not None else Decimal('0.00')
-            total_faltante += (cuota.monto_cuota - cuota_total_pagado)
 
     context = {
         'el_prestamo_actual': prestamo,
         'cuotas_del_prestamo': cuotas,
+        'totales_amortizacion': totales_amortizacion,
         'pago_total_realizado': total_pagado,
-        'ganancia_estimada': ganancia_potencial,
+        'ganancia_estimada': ganancia_estimada,
         'total_faltante': total_faltante,
         'total_penalidades_acumuladas': total_penalidades_acumuladas,
     }

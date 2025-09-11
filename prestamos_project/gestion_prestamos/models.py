@@ -292,14 +292,15 @@ class Prestamo(models.Model):
         """
         monto_a_distribuir = monto_pagado
         cuotas_pendientes = self.cuotas.filter(
-            estado__in=['pendiente', 'pagada_parcialmente']
+            estado__in=['pendiente', 'pagada_parcialmente', 'vencida']
         ).order_by('numero_cuota')
 
         for cuota in cuotas_pendientes:
             if monto_a_distribuir <= 0:
                 break
 
-            monto_necesario = cuota.monto_cuota - cuota.total_pagado
+            # AHORA INCLUYE LA PENALIDAD
+            monto_necesario = cuota.monto_total_a_pagar - cuota.total_pagado
             pago_a_cuota = min(monto_a_distribuir, monto_necesario)
 
             # La fecha_pago ya no se pasa, se crea automáticamente.
@@ -372,18 +373,16 @@ class Cuota(models.Model):
     def total_pagado(self):
         return self.pagos.aggregate(total=models.Sum('monto_pagado'))['total'] or Decimal(0)
 
+    @property
+    def monto_total_a_pagar(self):
+        """Suma el monto de la cuota y la penalidad acumulada."""
+        return self.monto_cuota + self.monto_penalidad_acumulada
+
     def actualizar_estado(self):
         total_pagado_actual = self.total_pagado
 
-        # Verificación defensiva: Si el estado es 'pagada' pero no se ha pagado completamente, corregirlo.
-        if self.estado == 'pagada' and total_pagado_actual < self.monto_cuota:
-            if total_pagado_actual > Decimal('0.00'):
-                self.estado = 'pagada_parcialmente'
-            else:
-                self.estado = 'pendiente'
-        
-        # Lógica principal de actualización de estado
-        if total_pagado_actual >= self.monto_cuota:
+        # AHORA SE COMPARA CON EL MONTO TOTAL (CUOTA + PENALIDAD)
+        if total_pagado_actual >= self.monto_total_a_pagar:
             self.estado = 'pagada'
         elif total_pagado_actual > Decimal('0.00'):
             self.estado = 'pagada_parcialmente'

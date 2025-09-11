@@ -15,42 +15,65 @@
     <a href="javascript:history.back()" class="btn btn-sm btn-outline-secondary">Volver</a>
 </div>
 
-<!-- Sección para mostrar los detalles del cliente -->
-<section class="client-details-section">
-    <h2>Información de Contacto</h2>
-    <div class="details-grid">
-        <div class="detail-item">
-            <strong>Dirección:</strong>
-            <p>{{ cliente.direccion|default:"No especificada" }}</p>
+<div class="details-card">
+    <h3><i class="fas fa-user-circle" style="margin-right: 8px;"></i>Información Personal</h3>
+    <div class="details-list">
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-id-card" style="margin-right: 8px;"></i>Documento</span>
+            <span class="details-list-value">{{ cliente.get_tipo_documento_display }}: {{ cliente.numero_documento }}</span>
         </div>
-        <div class="detail-item">
-            <strong>Teléfono:</strong>
-            <p>{{ cliente.telefono|default:"No especificado" }}</p>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-envelope" style="margin-right: 8px;"></i>Correo Electrónico</span>
+            <span class="details-list-value">{{ cliente.email|default:"No especificado" }}</span>
         </div>
-        <div class="detail-item">
-            <strong>Fecha de Registro:</strong>
-            <p>{{ cliente.fecha_registro|date:"d M, Y" }}</p>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-phone" style="margin-right: 8px;"></i>Teléfono</span>
+            <span class="details-list-value">{{ cliente.telefono|default:"No especificado" }}</span>
+        </div>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-map-marker-alt" style="margin-right: 8px;"></i>Dirección</span>
+            <span class="details-list-value">{{ cliente.direccion|default:"No especificada" }}</span>
+        </div>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-ring" style="margin-right: 8px;"></i>Estado Civil</span>
+            <span class="details-list-value">{{ cliente.get_estado_civil_display|default:"No especificado" }}</span>
+        </div>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-venus-mars" style="margin-right: 8px;"></i>Sexo</span>
+            <span class="details-list-value">{{ cliente.get_sexo_display|default:"No especificado" }}</span>
+        </div>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-birthday-cake" style="margin-right: 8px;"></i>Fecha de Nacimiento</span>
+            <span class="details-list-value">{{ cliente.fecha_nacimiento|date:"d M, Y"|default:"No especificada" }}</span>
+        </div>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-calendar-plus" style="margin-right: 8px;"></i>Fecha de Registro</span>
+            <span class="details-list-value">{{ cliente.fecha_registro|date:"d M, Y" }}</span>
         </div>
     </div>
-</section>
+</div>
 
-<section class="client-details-section">
-    <h2>Información Laboral</h2>
-    <div class="details-grid">
-        <div class="detail-item">
-            <strong>Ingresos Mensuales:</strong>
-            <p>{{ cliente.ingresos_mensuales|format_number }}</p>
+<div class="details-card" style="margin-top: 2rem;">
+    <h3><i class="fas fa-briefcase" style="margin-right: 8px;"></i>Información Laboral</h3>
+    <div class="details-list">
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-building" style="margin-right: 8px;"></i>Empresa</span>
+            <span class="details-list-value">{{ cliente.nombre_empresa|default:"No especificado" }}</span>
         </div>
-        <div class="detail-item">
-            <strong>Fecha de Ingreso:</strong>
-            <p>{{ cliente.fecha_ingreso_trabajo|date:"d M, Y"|default:"No especificada" }}</p>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-user-tie" style="margin-right: 8px;"></i>Cargo</span>
+            <span class="details-list-value">{{ cliente.cargo|default:"No especificado" }}</span>
         </div>
-        <div class="detail-item">
-            <strong>Trabajo Actual:</strong>
-            <p>{% if cliente.trabajo_actual %}Sí{% else %}No{% endif %}</p>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-money-bill-wave" style="margin-right: 8px;"></i>Ingresos Mensuales</span>
+            <span class="details-list-value">${{ cliente.ingresos_mensuales|format_number|default:"No especificado" }}</span>
+        </div>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-calendar-day" style="margin-right: 8px;"></i>Fecha de Ingreso</span>
+            <span class="details-list-value">{{ cliente.fecha_ingreso_trabajo|date:"d M, Y"|default:"No especificada" }}</span>
         </div>
     </div>
-</section>
+</div>
 
 <!-- Sección para mostrar el historial de préstamos -->
 <section class="loan-history-section">

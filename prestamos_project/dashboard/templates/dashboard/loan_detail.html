@@ -23,23 +23,101 @@
 {% include 'includes/_messages.html' %}
 
 <div class="content-container">
-    <div class="loan-details">
+        <div class="details-card">
         <h3>Información del Préstamo</h3>
-        <p><strong>Cliente:</strong> {{ el_prestamo_actual.cliente.nombres }} {{ el_prestamo_actual.cliente.apellidos }}</p>
-        <p><strong>Tipo de Préstamo:</strong> {{ el_prestamo_actual.tipo_prestamo.nombre|default:"N/A" }}</p>
-        <p><strong>Monto:</strong> ${{ el_prestamo_actual.monto }}</p>
-        <p><strong>Tasa de Interés:</strong> {{ el_prestamo_actual.tasa_interes }}%</p>
-        <p><strong>Plazo:</strong> {{ el_prestamo_actual.plazo }} meses</p>
-        <p><strong>Frecuencia de Pago:</strong> {{ el_prestamo_actual.frecuencia_pago|capfirst }}</p>
-        <p><strong>Fecha de Desembolso:</strong> {{ el_prestamo_actual.fecha_desembolso|date:"d/m/Y" }}</p>
-        <p><strong>Estado:</strong> {{ el_prestamo_actual.estado|capfirst }}</p>
-        <p><strong>Manejo de Gastos:</strong> {{ el_prestamo_actual.get_manejo_gastos_display }}</p>
-        <p><strong>Total de Gastos Asociados:</strong> ${{ el_prestamo_actual.total_gastos_asociados|floatformat:2 }}</p>
-        <p><strong>Monto Desembolsado:</strong> ${{ el_prestamo_actual.monto_desembolsado|floatformat:2 }}</p>
-        <p><strong>Ganancia Total Estimada:</strong> <span style="color: #28a745; font-weight: bold;">${{ ganancia_estimada|floatformat:2 }}</span></p>
-        <p><strong>Monto Total Pagado:</strong> <span style="color: #007bff; font-weight: bold;">${{ pago_total_realizado|floatformat:2 }}</span></p>
-        <p><strong>Total Faltante:</strong> <span style="color: #dc3545; font-weight: bold;">${{ total_faltante|format_number }}</span></p>
-        <p><strong>Penalidad Acumulada:</strong> <span style="color: #dc3545; font-weight: bold;">${{ total_penalidades_acumuladas|format_number }}</span></p>
+        <div class="details-list">
+            <div class="details-list-item">
+                <span class="details-list-label"><i class="fas fa-user" style="margin-right: 8px;"></i>Cliente</span>
+                <span class="details-list-value">{{ el_prestamo_actual.cliente.nombres }} {{ el_prestamo_actual.cliente.apellidos }}</span>
+            </div>
+            <div class="details-list-item">
+                <span class="details-list-label"><i class="fas fa-folder-open" style="margin-right: 8px;"></i>Tipo de Préstamo</span>
+                <span class="details-list-value">{{ el_prestamo_actual.tipo_prestamo.nombre|default:"N/A" }}</span>
+            </div>
+            <div class="details-list-item">
+                <span class="details-list-label"><i class="fas fa-file-invoice-dollar" style="margin-right: 8px;"></i>Monto Solicitado</span>
+                <span class="details-list-value">${{ el_prestamo_actual.monto|format_number }}</span>
+            </div>
+            <div class="details-list-item">
+                <span class="details-list-label"><i class="fas fa-percentage" style="margin-right: 8px;"></i>Tasa de Interés</span>
+                <span class="details-list-value">{{ el_prestamo_actual.tasa_interes }}%</span>
+            </div>
+            <div class="details-list-item">
+                <span class="details-list-label"><i class="fas fa-calendar-alt" style="margin-right: 8px;"></i>Plazo</span>
+                <span class="details-list-value">{{ el_prestamo_actual.plazo }} meses</span>
+            </div>
+            <div class="details-list-item">
+                <span class="details-list-label"><i class="fas fa-redo-alt" style="margin-right: 8px;"></i>Frecuencia de Pago</span>
+                <span class="details-list-value">{{ el_prestamo_actual.frecuencia_pago|capfirst }}</span>
+            </div>
+            <div class="details-list-item">
+                <span class="details-list-label"><i class="fas fa-calendar-check" style="margin-right: 8px;"></i>Fecha de Desembolso</span>
+                <span class="details-list-value">{{ el_prestamo_actual.fecha_desembolso|date:"d/m/Y" }}</span>
+            </div>
+            <div class="details-list-item">
+                <span class="details-list-label"><i class="fas fa-info-circle" style="margin-right: 8px;"></i>Estado</span>
+                <span class="details-list-value">{{ el_prestamo_actual.estado|capfirst }}</span>
+            </div>
+            <div class="details-list-item">
+                <span class="details-list-label"><i class="fas fa-money-bill-wave" style="margin-right: 8px;"></i>Monto Desembolsado</span>
+                <span class="details-list-value">${{ el_prestamo_actual.monto_desembolsado|format_number }}</span>
+            </div>
+            <div class="details-list-item">
+                <span class="details-list-label"><i class="fas fa-chart-line" style="margin-right: 8px;"></i>Ganancia Estimada</span>
+                <span class="details-list-value positive">${{ ganancia_estimada|format_number }}</span>
+            </div>
+            <div class="details-list-item">
+                <span class="details-list-label"><i class="fas fa-hand-holding-usd" style="margin-right: 8px;"></i>Monto Total Pagado</span>
+                <span class="details-list-value">${{ pago_total_realizado|format_number }}</span>
+            </div>
+            <div class="details-list-item">
+                <span class="details-list-label"><i class="fas fa-balance-scale-right" style="margin-right: 8px;"></i>Total Faltante</span>
+                <span class="details-list-value negative">${{ total_faltante|format_number }}</span>
+            </div>
+            <div class="details-list-item">
+                <span class="details-list-label"><i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>Penalidad Acumulada</span>
+                <span class="details-list-value negative">${{ total_penalidades_acumuladas|format_number }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Garantía y Requisitos -->
+    <div class="details-card" style="margin-top: 2rem;">
+        <h3>Garantía y Requisitos del Préstamo</h3>
+        {% if el_prestamo_actual.garante %}
+            <h4><i class="fas fa-user-shield"></i> Garante</h4>
+            <div class="details-list">
+                <div class="details-list-item">
+                    <span class="details-list-label">Nombre Completo</span>
+                    <span class="details-list-value">{{ el_prestamo_actual.garante.nombre_completo }}</span>
+                </div>
+                <div class="details-list-item">
+                    <span class="details-list-label">Cédula</span>
+                    <span class="details-list-value">{{ el_prestamo_actual.garante.cedula }}</span>
+                </div>
+                <div class="details-list-item">
+                    <span class="details-list-label">Lugar de Trabajo</span>
+                    <span class="details-list-value">{{ el_prestamo_actual.garante.lugar_trabajo }}</span>
+                </div>
+                <div class="details-list-item">
+                    <span class="details-list-label">Ingresos Mensuales</span>
+                    <span class="details-list-value">${{ el_prestamo_actual.garante.ingresos_mensuales|format_number }}</span>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if el_prestamo_actual.requisitos.all %}
+            <h4 style="margin-top: 1.5rem;"><i class="fas fa-paperclip"></i> Requisitos y Garantías Adjuntas</h4>
+            <ul>
+                {% for requisito in el_prestamo_actual.requisitos.all %}
+                    <li><strong>{{ requisito.get_tipo_display }}:</strong> {{ requisito.descripcion }} {% if requisito.valor_estimado %}(Valor estimado: ${{ requisito.valor_estimado|format_number }}){% endif %}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if not el_prestamo_actual.garante and not el_prestamo_actual.requisitos.all %}
+            <p>Este préstamo no tiene un garante ni requisitos adjuntos.</p>
+        {% endif %}
     </div>
 
     <h3 style="margin-top: 2rem;">Tabla de Amortización</h3>
@@ -50,6 +128,8 @@
                     <th>Cuota #</th>
                     <th>Fecha Vencimiento</th>
                     <th>Cuota Fija</th>
+                    <th>Penalidad</th>
+                    <th>Total a Pagar</th>
                     <th>Capital</th>
                     <th>Interés</th>
                     <th>Saldo Pendiente</th>
@@ -58,26 +138,55 @@
             </thead>
             <tbody>
                 {% for cuota in cuotas_del_prestamo %}
-                <tr>
+                <tr class="{% if cuota.is_overdue %}table-danger{% endif %}">
                     <td>{{ cuota.numero_cuota }}</td>
                     <td>{{ cuota.fecha_vencimiento|date:"d/m/Y" }}</td>
-                    <td>${{ cuota.monto_cuota|floatformat:2 }}</td>
-                    <td>${{ cuota.capital|floatformat:2 }}</td>
-                    <td>${{ cuota.interes|floatformat:2 }}</td>
-                    <td>${{ cuota.saldo_pendiente|floatformat:2 }}</td>
+                    <td>${{ cuota.monto_cuota|format_number }}</td>
+                    <td>${{ cuota.monto_penalidad_acumulada|format_number }}</td>
+                    <td style="font-weight: bold;">${{ cuota.monto_total_a_pagar|format_number }}</td>
+                    <td>${{ cuota.capital|format_number }}</td>
+                    <td>${{ cuota.interes|format_number }}</td>
+                    <td>${{ cuota.saldo_pendiente|format_number }}</td>
                     <td>
                         {% if cuota.estado == 'pagada' %}
                             <span class="badge bg-success"><i class="fa-solid fa-check"></i> Pagada</span>
                         {% elif cuota.estado == 'pagada_parcialmente' %}
-                            <span class="badge bg-warning">Parcial</span>
-                        {% else %}
-                            <span class="badge bg-secondary">Pendiente</span>
+                            {% if cuota.is_overdue %}
+                                <span class="badge bg-danger">Parcial (Vencida)</span>
+                            {% else %}
+                                <span class="badge bg-warning">Parcial</span>
+                            {% endif %}
+                        {% else %} {# Pendiente #}
+                            {% if cuota.is_overdue %}
+                                <span class="badge bg-danger">Pendiente (Vencida)</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Pendiente</span>
+                            {% endif %}
                         {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+
+    <div class="amortization-summary">
+        <div class="summary-item">
+            <span class="summary-label">Total a Pagar</span>
+            <span class="summary-value">${{ totales_amortizacion.total_a_pagar|format_number }}</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">Total Capital</span>
+            <span class="summary-value">${{ totales_amortizacion.total_capital|format_number }}</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">Total Interés</span>
+            <span class="summary-value">${{ totales_amortizacion.total_interes|format_number }}</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">Total Penalidad</span>
+            <span class="summary-value">${{ totales_amortizacion.total_penalidad|format_number }}</span>
+        </div>
     </div>
 </div>
 {% endblock %}

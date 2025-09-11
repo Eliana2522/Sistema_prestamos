@@ -600,3 +600,112 @@ form p > label {
 .nav-section-config .nav-link i.fa-fw {
     color: #7f8c8d; /* Gris */
 }
+
+
+
+
+
+/* ================================= */
+/* === ESTILOS PARA TARJETA DE DETALLES === */
+/* ================================= */
+
+.details-card {
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid #E9ECEF;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.04);
+    margin-bottom: 2rem;
+}
+
+.details-card h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #E9ECEF;
+    padding-bottom: 1rem;
+    font-size: 1.5rem;
+    color: #2c3e50;
+}
+
+.details-list {
+    display: grid;
+    grid-template-columns: 1fr; /* One column on small screens */
+    gap: 1rem;
+}
+
+/* Two columns on larger screens */
+@media (min-width: 768px) {
+    .details-list {
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+}
+
+.details-list-item {
+    display: flex;
+    flex-direction: column;
+    background-color: #f8f9fa;
+    padding: 0.75rem 1rem;
+    border-radius: 5px;
+}
+
+.details-list-label {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #566573;
+    margin-bottom: 0.25rem;
+}
+
+.details-list-value {
+    font-size: 1.1em;
+    font-weight: 500;
+    color: #2c3e50;
+    word-wrap: break-word; /* Break long words */
+}
+
+.details-list-value.positive {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.details-list-value.negative {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* ================================= */
+/* === ESTILOS PARA RESUMEN DE TABLA === */
+/* ================================= */
+
+.amortization-summary {
+    display: flex;
+    justify-content: space-around; /* Distribute items evenly */
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+    gap: 1rem;
+    padding: 1.5rem;
+    margin-top: 1rem; /* Space from the table */
+    background-color: #f8f9fa; /* Light grey background */
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 150px; /* Minimum width for each item */
+}
+
+.summary-label {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #566573;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.summary-value {
+    font-size: 1.5em; /* Larger font for the value */
+    font-weight: 600;
+    color: #2c3e50;
+}
