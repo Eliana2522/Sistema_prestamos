@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% load format_helpers %}
 
 {% block title %}{{ page_title|default:"Préstamos Activos" }}{% endblock %}
 
@@ -46,7 +47,7 @@
                     <td>{{ prestamo.id }}</td>
                     <td>{{ prestamo.cliente.nombres }} {{ prestamo.cliente.apellidos }}</td>
                     <td>{{ prestamo.tipo_prestamo.nombre|default:"N/A" }}</td>
-                    <td>${{ prestamo.monto|floatformat:2 }}</td>
+                    <td>{{ prestamo.monto|format_number }}</td>
                     <td>{{ prestamo.tasa_interes|floatformat:2 }}%</td>
                     <td>{{ prestamo.plazo }}</td>
                     <td>{{ prestamo.frecuencia_pago|capfirst }}</td>

@@ -60,6 +60,7 @@ urlpatterns = [
 
     # --- API URLs ---
     path('api/tipo-prestamo/<int:pk>/', views.get_tipo_prestamo_details, name='get_tipo_prestamo_details'),
+    path('api/calculate-amortization/', views.calculate_amortization_api, name='calculate_amortization_api'),
 
     # --- URLs para Finanzas ---
     path('finanzas/', views.financial_details, name='financial_details'),

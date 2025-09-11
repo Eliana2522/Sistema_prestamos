@@ -80,6 +80,31 @@ class Cliente(models.Model):
     # de creación cuando se registra un nuevo cliente.
     fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Registro")
 
+    # Nuevos campos
+    ESTADO_CIVIL_CHOICES = [
+        ('soltero', 'Soltero/a'),
+        ('casado', 'Casado/a'),
+        ('divorciado', 'Divorciado/a'),
+        ('viudo', 'Viudo/a'),
+    ]
+    SEXO_CHOICES = [
+        ('masculino', 'Masculino'),
+        ('femenino', 'Femenino'),
+    ]
+
+    estado_civil = models.CharField(max_length=20, choices=ESTADO_CIVIL_CHOICES, blank=True, null=True, verbose_name="Estado Civil")
+    sexo = models.CharField(max_length=20, choices=SEXO_CHOICES, blank=True, null=True, verbose_name="Sexo")
+    fecha_nacimiento = models.DateField(blank=True, null=True, verbose_name="Fecha de Nacimiento")
+    apodo = models.CharField(max_length=50, blank=True, null=True, verbose_name="Apodo")
+
+    # Información laboral
+    nombre_empresa = models.CharField(max_length=200, blank=True, null=True, verbose_name="Nombre de la Empresa")
+    cargo = models.CharField(max_length=100, blank=True, null=True, verbose_name="Cargo o Posición")
+    telefono_trabajo = models.CharField(max_length=20, blank=True, null=True, verbose_name="Teléfono del Trabajo")
+    ingresos_mensuales = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name="Ingresos Mensuales")
+    fecha_ingreso_trabajo = models.DateField(blank=True, null=True, verbose_name="Fecha de Ingreso al Trabajo")
+    trabajo_actual = models.BooleanField(default=True, verbose_name="¿Es su trabajo actual?")
+
     # El método `__str__` le dice a Django cómo "imprimir" un objeto Cliente.
     # Es muy útil en el panel de administración para ver una representación legible de cada cliente.
     def __str__(self):
@@ -90,6 +115,25 @@ class Cliente(models.Model):
         db_table = 'prestamos_cliente'
         verbose_name = "Cliente"
         verbose_name_plural = "Clientes"
+
+# ==================================================
+# === MODELO GARANTE ===
+# ==================================================
+# Almacena la información del garante de un préstamo.
+class Garante(models.Model):
+    nombre_completo = models.CharField(max_length=200, verbose_name="Nombre Completo")
+    cedula = models.CharField(max_length=20, unique=True, verbose_name="Cédula")
+    lugar_trabajo = models.CharField(max_length=200, verbose_name="Lugar de Trabajo")
+    ingresos_mensuales = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Ingresos Mensuales")
+
+    def __str__(self):
+        return self.nombre_completo
+
+    class Meta:
+        db_table = 'prestamos_garante'
+        verbose_name = "Garante"
+        verbose_name_plural = "Garantes"
+
 
 # ==================================================
 # === MODELO TIPO DE PRÉSTAMO ===
@@ -140,6 +184,12 @@ class TipoPrestamo(models.Model):
         help_text="Define sobre qué monto se calcula la penalidad diaria."
     )
 
+    requiere_garantia = models.BooleanField(
+        default=False,
+        verbose_name="¿Requiere Garantía?",
+        help_text="Marcar si este tipo de préstamo exige una garantía o requisito adicional."
+    )
+
     def __str__(self):
         return self.nombre
 
@@ -162,8 +212,20 @@ class Prestamo(models.Model):
     ]
     # Nuevas opciones para la frecuencia de pago
     FRECUENCIA_CHOICES = [
-        ('mensual', 'Mensual'),
+        ('semanal', 'Semanal'),
         ('quincenal', 'Quincenal'),
+        ('mensual', 'Mensual'),
+    ]
+
+    TIPO_AMORTIZACION_CHOICES = [
+        ('saldo_insoluto', 'Saldo Insoluto'),
+        ('capital_fijo', 'Capital Fijo'),
+        ('interes_simple', 'Interés Simple'),
+    ]
+
+    MANEJO_GASTOS_CHOICES = [
+        ('sumar_al_capital', 'Sumar al Capital'),
+        ('restar_del_desembolso', 'Restar del Desembolso'),
     ]
 
     # `ForeignKey` crea una relación "muchos a uno" con el modelo Cliente. 
@@ -177,13 +239,16 @@ class Prestamo(models.Model):
     # `DecimalField` es ideal para guardar dinero, ya que evita problemas de redondeo.
     # `max_digits` es el número total de dígitos, y `decimal_places` es el número de decimales.
     monto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Monto del Préstamo")
-    tasa_interes = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Tasa de Interés Anual", help_text="En porcentaje (%)")
+    tasa_interes = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Tasa de Interés", help_text="En porcentaje (%)")
+    periodo_tasa = models.CharField(max_length=10, choices=TipoPrestamo.PERIODO_TASA_CHOICES, default='anual', verbose_name="Periodo de la Tasa")
+    tasa_mora = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Tasa de Mora Anual", help_text="En porcentaje (%)", null=True, blank=True)
     
     # `IntegerField` es para números enteros.
     plazo = models.IntegerField(verbose_name="Plazo", help_text="En meses")
     
     # `DateField` es para guardar solo fechas (sin hora).
     fecha_desembolso = models.DateField(verbose_name="Fecha de Desembolso")
+    fecha_inicio_pago = models.DateField(verbose_name="Fecha de Inicio de Pago", null=True, blank=True)
     
     # `choices` limita los valores de este campo a las opciones definidas en `ESTADO_CHOICES`.
     estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='activo', verbose_name="Estado")
@@ -195,6 +260,25 @@ class Prestamo(models.Model):
         default='mensual',
         verbose_name="Frecuencia de Pago"
     )
+
+    tipo_amortizacion = models.CharField(
+        max_length=20,
+        choices=TIPO_AMORTIZACION_CHOICES,
+        default='saldo_insoluto',
+        verbose_name="Tipo de Amortización"
+    )
+
+    manejo_gastos = models.CharField(
+        max_length=30,
+        choices=MANEJO_GASTOS_CHOICES,
+        default='sumar_al_capital',
+        verbose_name="Manejo de Gastos Adicionales"
+    )
+
+    total_gastos_asociados = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Total de Gastos Asociados")
+    monto_desembolsado = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Monto Desembolsado")
+
+    garante = models.ForeignKey('Garante', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Garante")
 
     fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
 
@@ -365,12 +449,15 @@ class Capital(models.Model):
 # Almacena los requisitos o garantías asociadas a un préstamo.
 class Requisito(models.Model):
     TIPO_CHOICES = [
-        ('garantia', 'Garantía Monetaria'),
-        ('documento', 'Documento/Requisito'),
+        ('titulo_vehiculo', 'Título de Vehículo'),
+        ('titulo_propiedad', 'Título de Propiedad'),
+        ('garantia_solidaria', 'Garantía Solidaria'),
+        ('carta_trabajo', 'Carta de Trabajo'),
+        ('otro', 'Otro'),
     ]
     prestamo = models.ForeignKey(Prestamo, on_delete=models.CASCADE, related_name='requisitos')
-    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default='documento', verbose_name="Tipo de Requisito")
-    descripcion = models.CharField(max_length=255, help_text="Descripción del requisito (ej: Matrícula universitaria, Título de propiedad, etc.)")
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='otro', verbose_name="Tipo de Requisito")
+    descripcion = models.CharField(max_length=255, help_text="Detalles del requisito (ej: Marca y placa del vehículo, No. de matrícula del inmueble, etc.)")
     valor_estimado = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="Valor estimado (solo si aplica, para garantías monetarias)")
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 

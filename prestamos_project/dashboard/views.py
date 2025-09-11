@@ -3,18 +3,19 @@ from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Value, DecimalField, Count, F, Q
 from django.db.models.functions import Coalesce
-from gestion_prestamos.forms import ClienteForm, PrestamoForm, PagoForm, TipoPrestamoForm, GastoPrestamoForm, RequisitoForm
+from gestion_prestamos.forms import ClienteForm, PrestamoForm, PagoForm, TipoPrestamoForm, GastoPrestamoForm, RequisitoForm, GaranteForm
 from gestion_prestamos.models import Prestamo, Cliente, Pago, Cuota, TipoPrestamo, Capital, GastoPrestamo, TipoGasto, Requisito
 from django.forms import modelformset_factory
 from gestion_prestamos.utils import calcular_tabla_amortizacion, calcular_penalidad_cuota
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
-from datetime import timedelta
+from datetime import date, timedelta
 from django.contrib.auth.views import PasswordChangeView
 from django.urls import reverse_lazy
+import json
 
 # --- Vistas del Dashboard ---
 
@@ -108,13 +109,21 @@ def client_list(request):
 @login_required
 def client_add(request):
     """Maneja la creación de un nuevo cliente."""
+    print("--- client_add view called ---")
     if request.method == 'POST':
+        print("--- POST request received ---")
+        print("POST data:", request.POST)
         form = ClienteForm(request.POST)
         if form.is_valid():
+            print("Form is valid")
             form.save()
             messages.success(request, 'Cliente registrado exitosamente!')
             return redirect('client_list')
+        else:
+            print("Form is not valid")
+            print(form.errors)
     else:
+        print("--- GET request received ---")
         form = ClienteForm()
     context = {
         'form': form
@@ -124,14 +133,22 @@ def client_add(request):
 @login_required
 def client_edit(request, pk):
     """Maneja la edición de un cliente existente."""
+    print("--- client_edit view called ---")
     cliente = get_object_or_404(Cliente, pk=pk)
     if request.method == 'POST':
+        print("--- POST request received ---")
+        print("POST data:", request.POST)
         form = ClienteForm(request.POST, instance=cliente)
         if form.is_valid():
+            print("Form is valid")
             form.save()
             messages.success(request, 'Cliente actualizado exitosamente!')
             return redirect('client_list')
+        else:
+            print("Form is not valid")
+            print(form.errors)
     else:
+        print("--- GET request received ---")
         form = ClienteForm(instance=cliente)
     context = {
         'form': form
@@ -161,28 +178,64 @@ def loan_add(request):
     RequisitoFormSet = modelformset_factory(Requisito, form=RequisitoForm, extra=0, can_delete=True)
 
     if request.method == 'POST':
+        print("--- loan_add view: POST request received ---")
         form = PrestamoForm(request.POST)
         gasto_formset = GastoFormSet(request.POST, queryset=GastoPrestamo.objects.none(), prefix='gastos')
         requisito_formset = RequisitoFormSet(request.POST, queryset=Requisito.objects.none(), prefix='requisitos')
+        garante_form = GaranteForm(request.POST)
 
-        if form.is_valid() and gasto_formset.is_valid() and requisito_formset.is_valid():
+        form_is_valid = form.is_valid()
+        gasto_formset_is_valid = gasto_formset.is_valid()
+        requisito_formset_is_valid = requisito_formset.is_valid()
+
+        print(f"--- loan_add view: form.is_valid() -> {form_is_valid} ---")
+        print(f"--- loan_add view: gasto_formset.is_valid() -> {gasto_formset_is_valid} ---")
+        print(f"--- loan_add view: requisito_formset.is_valid() -> {requisito_formset_is_valid} ---")
+
+        if form_is_valid and gasto_formset_is_valid and requisito_formset_is_valid:
+            print("--- loan_add view: All forms are valid, proceeding with further validations ---")
             tipo_prestamo = form.cleaned_data.get('tipo_prestamo')
-            
+            monto_solicitado = form.cleaned_data['monto']
+
+            # Validar garante si el monto es < 100,000
+            if monto_solicitado < 100000:
+                print("--- loan_add view: Loan amount is less than 100,000, validating guarantor form ---")
+                if not garante_form.is_valid():
+                    print("--- loan_add view: Guarantor form is NOT valid ---")
+                    print(garante_form.errors)
+                    messages.error(request, 'El formulario del garante no es válido. Por favor, revisa los campos.')
+                    context = {'form': form, 'gasto_formset': gasto_formset, 'requisito_formset': requisito_formset, 'garante_form': garante_form}
+                    return render(request, 'dashboard/loan_form.html', context)
+                else:
+                    print("--- loan_add view: Guarantor form is valid ---")
+
             # Validar que si el tipo de préstamo requiere garantía, se provea al menos una.
             if tipo_prestamo and tipo_prestamo.requiere_garantia:
                 if not any(form.cleaned_data and not form.cleaned_data.get('DELETE') for form in requisito_formset):
                     messages.error(request, f'El tipo de préstamo "{tipo_prestamo.nombre}" requiere al menos un requisito o garantía.')
-                    context = {'form': form, 'gasto_formset': gasto_formset, 'requisito_formset': requisito_formset}
+                    context = {'form': form, 'gasto_formset': gasto_formset, 'requisito_formset': requisito_formset, 'garante_form': garante_form}
                     return render(request, 'dashboard/loan_form.html', context)
 
-            monto_solicitado = form.cleaned_data['monto']
             total_gastos = Decimal('0.00')
             for gasto_form in gasto_formset.cleaned_data:
-                if gasto_form and not gasto_form.get('DELETE'):
+                if gasto_form and not gasto_form.get('DELETE') and 'monto' in gasto_form:
                     total_gastos += gasto_form['monto']
 
             prestamo = form.save(commit=False)
-            prestamo.monto = monto_solicitado + total_gastos
+            prestamo.total_gastos_asociados = total_gastos
+
+            if prestamo.manejo_gastos == 'sumar_al_capital':
+                prestamo.monto = monto_solicitado + total_gastos
+                prestamo.monto_desembolsado = monto_solicitado
+            else: # restar_del_desembolso
+                prestamo.monto = monto_solicitado
+                prestamo.monto_desembolsado = monto_solicitado - total_gastos
+
+            # Guardar garante si es necesario
+            if monto_solicitado < 100000:
+                garante = garante_form.save()
+                prestamo.garante = garante
+
             prestamo.save()
 
             # Guardar gastos
@@ -211,22 +264,39 @@ def loan_add(request):
                     saldo_pendiente=item_cuota['saldo_pendiente']
                 )
             
-            messages.success(request, f'Préstamo de ${prestamo.monto:,.2f} registrado exitosamente!')
+            messages.success(request, f'¡Éxito! Préstamo de ${prestamo.monto:,.2f} para {prestamo.cliente.nombres} {prestamo.cliente.apellidos} ha sido registrado correctamente.')
             return redirect('loan_list')
         else:
-            messages.error(request, 'Por favor, corrige los errores en el formulario.')
-            context = {'form': form, 'gasto_formset': gasto_formset, 'requisito_formset': requisito_formset}
+            # Mensaje de error principal más explícito
+            error_count = len(form.errors) + len(gasto_formset.errors) + len(requisito_formset.errors)
+            if garante_form.errors:
+                error_count += len(garante_form.errors)
+            messages.error(request, f'El formulario no es válido. Se encontraron {error_count} error(es). Por favor, revisa los campos marcados.')
+            
+            # Mensajes de advertencia para cada sección con errores
+            if form.errors:
+                messages.warning(request, 'Hay errores en la sección de Detalles del Préstamo.')
+            if gasto_formset.errors:
+                messages.warning(request, 'Hay errores en la sección de Gastos Asociados.')
+            if requisito_formset.errors:
+                messages.warning(request, 'Hay errores en la sección de Requisitos y Garantías.')
+            if garante_form.errors:
+                messages.warning(request, 'Hay errores en la sección de Información del Garante.')
+
+            context = {'form': form, 'gasto_formset': gasto_formset, 'requisito_formset': requisito_formset, 'garante_form': garante_form}
             return render(request, 'dashboard/loan_form.html', context)
 
     else: # GET request
         form = PrestamoForm()
         gasto_formset = GastoFormSet(queryset=GastoPrestamo.objects.none(), prefix='gastos')
         requisito_formset = RequisitoFormSet(queryset=Requisito.objects.none(), prefix='requisitos')
+        garante_form = GaranteForm()
 
     context = {
         'form': form,
         'gasto_formset': gasto_formset,
-        'requisito_formset': requisito_formset
+        'requisito_formset': requisito_formset,
+        'garante_form': garante_form
     }
     return render(request, 'dashboard/loan_form.html', context)
 
@@ -385,14 +455,39 @@ def get_tipo_prestamo_details(request, pk):
     """Devuelve los detalles de un tipo de préstamo en formato JSON."""
     tipo_prestamo = get_object_or_404(TipoPrestamo, pk=pk)
     data = {
-        'tasa_interes_predeterminada': tipo_prestamo.tasa_interes_predeterminada,
-        'monto_minimo': tipo_prestamo.monto_minimo,
-        'monto_maximo': tipo_prestamo.monto_maximo,
+        'tasa_interes_predeterminada': str(tipo_prestamo.tasa_interes_predeterminada),
+        'monto_minimo': str(tipo_prestamo.monto_minimo),
+        'monto_maximo': str(tipo_prestamo.monto_maximo),
         'plazo_minimo_meses': tipo_prestamo.plazo_minimo_meses,
         'plazo_maximo_meses': tipo_prestamo.plazo_maximo_meses,
         'requiere_garantia': tipo_prestamo.requiere_garantia,
     }
     return JsonResponse(data)
+
+
+@login_required
+def calculate_amortization_api(request):
+    if request.method == 'POST':
+        form = PrestamoForm(request.POST)
+        if form.is_valid():
+            # Crear un objeto Prestamo temporal sin guardarlo en la BD
+            prestamo = form.save(commit=False)
+            try:
+                tabla_amortizacion = calcular_tabla_amortizacion(prestamo)
+                # Convertir objetos Decimal y date a string para la serialización JSON
+                for cuota in tabla_amortizacion:
+                    for key, value in cuota.items():
+                        if isinstance(value, Decimal):
+                            cuota[key] = f'{value:,.2f}'
+                        elif isinstance(value, date):
+                            cuota[key] = value.strftime('%Y-%m-%d')
+                return JsonResponse({'amortization_table': tabla_amortizacion})
+            except Exception as e:
+                return JsonResponse({'error': f'Error al calcular la amortización: {str(e)}'}, status=400)
+        else:
+            # Si el formulario no es válido, devolver los errores
+            return JsonResponse({'error': 'Formulario inválido', 'errors': form.errors}, status=400)
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 @login_required
 def financial_details(request):

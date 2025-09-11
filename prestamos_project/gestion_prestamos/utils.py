@@ -28,96 +28,83 @@ def _calcular_metodo_frances(prestamo):
     Calcula la tabla de amortización usando el método francés (cuotas fijas).
     """
     monto_pendiente = prestamo.monto
-    # Determinar la tasa de interés anual REAL basada en el tipo de préstamo
-    tasa_interes_nominal = prestamo.tasa_interes / Decimal(100)
-    if prestamo.tipo_prestamo and prestamo.tipo_prestamo.periodo_tasa == 'mensual':
-        # Si la tasa es mensual, se anualiza para los cálculos estándar.
-        tasa_interes_anual = tasa_interes_nominal * 12
-    else:
-        # Si es anual o no se especifica tipo, se toma como está.
-        tasa_interes_anual = tasa_interes_nominal
+    tasa_interes = prestamo.tasa_interes / Decimal(100)
+    periodo_tasa = prestamo.periodo_tasa
+    frecuencia = prestamo.frecuencia_pago
     plazo_meses = prestamo.plazo
     fecha_inicio = prestamo.fecha_desembolso
-    frecuencia = prestamo.frecuencia_pago
+
+    # --- Lógica de Tasa de Interés Corregida ---
+    
+    # 1. Convertir la tasa de interés a una tasa mensual
+    if periodo_tasa == 'anual':
+        tasa_mensual = tasa_interes / 12
+    elif periodo_tasa == 'mensual':
+        tasa_mensual = tasa_interes
+    else: # Default to annual
+        tasa_mensual = tasa_interes / 12
+
+    # 2. Calcular la tasa de interés para el período de pago
+    if frecuencia == 'mensual':
+        tasa_interes_periodo = tasa_mensual
+        numero_pagos = plazo_meses
+    elif frecuencia == 'quincenal':
+        tasa_interes_periodo = tasa_mensual / 2
+        numero_pagos = plazo_meses * 2
+    elif frecuencia == 'semanal':
+        tasa_interes_periodo = tasa_mensual / 4 # Aproximación
+        numero_pagos = plazo_meses * 4 # Aproximación
+    else: # Default to monthly
+        tasa_interes_periodo = tasa_mensual
+        numero_pagos = plazo_meses
 
     tabla_amortizacion = []
 
-    if frecuencia == 'mensual':
-        pagos_por_anio = 12
-        tasa_interes_periodo = tasa_interes_anual / Decimal(pagos_por_anio)
-        numero_pagos = plazo_meses
-        
-        if tasa_interes_periodo > 0:
-            cuota_fija = (monto_pendiente * tasa_interes_periodo) / (1 - (1 + tasa_interes_periodo)**(-numero_pagos))
-        else:
-            cuota_fija = monto_pendiente / numero_pagos
+    if tasa_interes_periodo > 0:
+        cuota_fija = (monto_pendiente * tasa_interes_periodo) / (1 - (1 + tasa_interes_periodo)**(-numero_pagos))
+    else:
+        cuota_fija = monto_pendiente / numero_pagos
 
-        for i in range(1, numero_pagos + 1):
-            interes_periodo = monto_pendiente * tasa_interes_periodo
-            capital_periodo = cuota_fija - interes_periodo
-            monto_pendiente -= capital_periodo
+    for i in range(1, numero_pagos + 1):
+        interes_periodo = monto_pendiente * tasa_interes_periodo
+        capital_periodo = cuota_fija - interes_periodo
+        monto_pendiente -= capital_periodo
 
-            # --- Lógica de Fecha de Vencimiento Mensual Corregida ---
-            # Se calcula el mes y año de la próxima cuota.
-            mes_futuro = fecha_inicio.month + i
-            año_futuro = fecha_inicio.year + (mes_futuro - 1) // 12
-            mes_futuro = (mes_futuro - 1) % 12 + 1
-
-            # Se previene un error si el día de desembolso no existe en el mes futuro (ej. 31 de Febrero)
-            if mes_futuro == 12:
-                ultimo_dia_del_mes = 31
-            else:
-                ultimo_dia_del_mes = (datetime.date(año_futuro, mes_futuro + 1, 1) - datetime.timedelta(days=1)).day
-            
+        # --- Lógica de Fecha de Vencimiento ---
+        if frecuencia == 'mensual':
+            año_futuro = fecha_inicio.year + (fecha_inicio.month + i - 1) // 12
+            mes_futuro = (fecha_inicio.month + i - 1) % 12 + 1
+            import calendar
+            ultimo_dia_del_mes = calendar.monthrange(año_futuro, mes_futuro)[1]
+            dia_vencimiento = min(fecha_inicio.day, ultimo_dia_del_mes)
+            fecha_vencimiento = datetime.date(año_futuro, mes_futuro, dia_vencimiento)
+        elif frecuencia == 'quincenal':
+            fecha_vencimiento = fecha_inicio + datetime.timedelta(days=15 * i)
+        elif frecuencia == 'semanal':
+            fecha_vencimiento = fecha_inicio + datetime.timedelta(weeks=i)
+        else: # Default to monthly
+            año_futuro = fecha_inicio.year + (fecha_inicio.month + i - 1) // 12
+            mes_futuro = (fecha_inicio.month + i - 1) % 12 + 1
+            import calendar
+            ultimo_dia_del_mes = calendar.monthrange(año_futuro, mes_futuro)[1]
             dia_vencimiento = min(fecha_inicio.day, ultimo_dia_del_mes)
             fecha_vencimiento = datetime.date(año_futuro, mes_futuro, dia_vencimiento)
 
-            # Ajuste final para la última cuota para que el saldo sea exactamente cero.
-            if i == numero_pagos:
-                capital_periodo += monto_pendiente
-                monto_pendiente = Decimal(0)
 
-            tabla_amortizacion.append({
-                'numero_cuota': i,
-                'fecha_vencimiento': fecha_vencimiento,
-                'cuota_fija': cuota_fija.quantize(Decimal('0.01')),
-                'interes': interes_periodo.quantize(Decimal('0.01')),
-                'capital': capital_periodo.quantize(Decimal('0.01')),
-                'saldo_pendiente': monto_pendiente.quantize(Decimal('0.01')),
-            })
+        # Ajuste final para la última cuota para que el saldo sea exactamente cero.
+        if i == numero_pagos:
+            capital_periodo += monto_pendiente
+            monto_pendiente = Decimal(0)
 
-    elif frecuencia == 'quincenal':
-        pagos_por_anio = 24
-        tasa_interes_periodo = tasa_interes_anual / Decimal(pagos_por_anio)
-        numero_pagos = plazo_meses * 2
-
-        if tasa_interes_periodo > 0:
-            cuota_fija = (monto_pendiente * tasa_interes_periodo) / (1 - (1 + tasa_interes_periodo)**(-numero_pagos))
-        else:
-            cuota_fija = monto_pendiente / numero_pagos
-
-        for i in range(1, numero_pagos + 1):
-            interes_periodo = monto_pendiente * tasa_interes_periodo
-            capital_periodo = cuota_fija - interes_periodo
-            monto_pendiente -= capital_periodo
-
-            # Ajuste final para la última cuota.
-            if i == numero_pagos:
-                capital_periodo += monto_pendiente
-                monto_pendiente = Decimal(0)
-            
-            # Se revierte a la lógica simple y estable de timedelta para quincenas.
-            fecha_vencimiento = fecha_inicio + datetime.timedelta(days=15 * i)
-
-            tabla_amortizacion.append({
-                'numero_cuota': i,
-                'fecha_vencimiento': fecha_vencimiento,
-                'cuota_fija': cuota_fija.quantize(Decimal('0.01')),
-                'interes': interes_periodo.quantize(Decimal('0.01')),
-                'capital': capital_periodo.quantize(Decimal('0.01')),
-                'saldo_pendiente': monto_pendiente.quantize(Decimal('0.01')),
-            })
-
+        tabla_amortizacion.append({
+            'numero_cuota': i,
+            'fecha_vencimiento': fecha_vencimiento,
+            'cuota_fija': cuota_fija.quantize(Decimal('0.01')),
+            'interes': interes_periodo.quantize(Decimal('0.01')),
+            'capital': capital_periodo.quantize(Decimal('0.01')),
+            'saldo_pendiente': monto_pendiente.quantize(Decimal('0.01')),
+        })
+    
     return tabla_amortizacion
 
 def calcular_penalidad_cuota(cuota):

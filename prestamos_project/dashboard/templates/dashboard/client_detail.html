@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% load format_helpers %}
 
 {% block title %}Perfil de {{ cliente.nombres }} {{ cliente.apellidos }}{% endblock %}
 
@@ -33,6 +34,24 @@
     </div>
 </section>
 
+<section class="client-details-section">
+    <h2>Información Laboral</h2>
+    <div class="details-grid">
+        <div class="detail-item">
+            <strong>Ingresos Mensuales:</strong>
+            <p>{{ cliente.ingresos_mensuales|format_number }}</p>
+        </div>
+        <div class="detail-item">
+            <strong>Fecha de Ingreso:</strong>
+            <p>{{ cliente.fecha_ingreso_trabajo|date:"d M, Y"|default:"No especificada" }}</p>
+        </div>
+        <div class="detail-item">
+            <strong>Trabajo Actual:</strong>
+            <p>{% if cliente.trabajo_actual %}Sí{% else %}No{% endif %}</p>
+        </div>
+    </div>
+</section>
+
 <!-- Sección para mostrar el historial de préstamos -->
 <section class="loan-history-section">
     <h2>Historial de Préstamos</h2>
@@ -53,7 +72,7 @@
                 {% for prestamo in prestamos %}
                 <tr>
                     <td>{{ prestamo.id }}</td>
-                    <td>${{ prestamo.monto|intcomma|floatformat:2 }}</td>
+                    <td>{{ prestamo.monto|format_number }}</td>
                     <td>{{ prestamo.plazo }} meses</td>
                     <td>{{ prestamo.tasa_interes|floatformat:2 }}%</td>
                     <td>{{ prestamo.fecha_desembolso|date:"d M, Y" }}</td>
