@@ -5,6 +5,10 @@ from gestion_prestamos.models import Cliente, Prestamo
 from gestion_prestamos.forms import ClienteForm
 from django.db.models import Q
 
+from django.contrib.auth.models import User
+from django.contrib import messages
+
+
 class ClientListView(ListView):
     model = Cliente
     template_name = 'dashboard/client_list.html'
@@ -33,6 +37,35 @@ class ClientCreateView(CreateView):
     form_class = ClienteForm
     template_name = 'dashboard/client_form.html'
     success_url = reverse_lazy('client_list')
+
+    def form_valid(self, form):
+        numero_documento = form.cleaned_data.get('numero_documento')
+
+        if User.objects.filter(username=numero_documento).exists():
+            form.add_error('numero_documento', f"Ya existe un usuario registrado con el documento '{numero_documento}'.")
+            return self.form_invalid(form)
+
+        self.object = form.save(commit=False)
+        
+        try:
+            user = User.objects.create_user(
+                username=numero_documento,
+                password=numero_documento,
+                first_name=self.object.nombres,
+                last_name=self.object.apellidos,
+                email=self.object.email
+            )
+            self.object.user = user
+            self.object.debe_cambiar_contrasena = True
+            self.object.save()
+            
+            messages.success(self.request, f"Cliente '{self.object}' y su portal de acceso han sido creados exitosamente.")
+
+        except Exception as e:
+            form.add_error(None, f"Error al crear el portal de acceso para el cliente: {e}")
+            return self.form_invalid(form)
+
+        return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -1,6 +1,6 @@
 from django.contrib import admin, messages
-from django.contrib.auth.models import User
 from .models import Cliente, Prestamo, Cuota, Pago, TipoPrestamo, Capital, TipoGasto, GastoPrestamo
+from django.contrib.auth.models import User
 import secrets
 import string
 
@@ -8,66 +8,105 @@ import string
 # === ACCIONES PERSONALIZADAS PARA EL ADMIN ===
 # ==================================================
 
-@admin.action(description="Generar y asignar contraseña temporal")
+@admin.action(description="Restablecer contraseña al Nº de Documento")
 def generate_temporary_password(modeladmin, request, queryset):
     """
-    Genera una contraseña aleatoria para los usuarios de los clientes seleccionados.
+    Restablece la contraseña del usuario al número de documento del cliente.
     """
-    password_list = []
+    updated_count = 0
     for cliente in queryset:
-        if cliente.user:
-            # Genera una contraseña aleatoria de 10 caracteres alfanuméricos
-            alphabet = string.ascii_letters + string.digits
-            temp_password = ''.join(secrets.choice(alphabet) for i in range(10))
-            cliente.user.set_password(temp_password)
+        if cliente.user and cliente.numero_documento:
+            password = cliente.numero_documento
+            cliente.user.set_password(password)
             cliente.user.save()
 
             # Activamos la bandera para forzar el cambio en el próximo login
-            if hasattr(cliente, 'debe_cambiar_contrasena'):
-                cliente.debe_cambiar_contrasena = True
-                cliente.save()
-
-            password_list.append(f"{cliente.nombres} {cliente.apellidos}: <strong>{temp_password}</strong>")
+            cliente.debe_cambiar_contrasena = True
+            cliente.save()
+            updated_count += 1
         else:
-            messages.warning(request, f"El cliente {cliente} no tiene un usuario de sistema asociado y no se le pudo generar una contraseña.")
+            if not cliente.user:
+                messages.warning(request, f"El cliente {cliente} no tiene un usuario de sistema asociado.")
+            elif not cliente.numero_documento:
+                messages.warning(request, f"El cliente {cliente} no tiene un número de documento para usar como contraseña.")
 
-    if password_list:
-        # Muestra las contraseñas generadas al administrador
-        from django.utils.html import format_html
-        message_html = format_html("Se generaron las siguientes contraseñas temporales:<br/>" + "<br/>".join(password_list))
-        messages.success(request, message_html)
+    if updated_count > 0:
+        messages.success(request, f"Se restableció la contraseña de {updated_count} cliente(s) a su número de documento.")
 
 # ==================================================
-# === CONFIGURACIÓN DEL PANEL DE ADMINISTRACIÓN ===
+# === CONFIGURACIÓN DE INLINES ===
+# ==================================================
+
+class GastoPrestamoInline(admin.TabularInline):
+    model = GastoPrestamo
+    extra = 1
+    classes = ['collapse']
+
+class CuotaInline(admin.TabularInline):
+    model = Cuota
+    extra = 0
+    readonly_fields = ('numero_cuota', 'fecha_vencimiento', 'monto_cuota', 'capital', 'interes', 'saldo_pendiente', 'estado', 'monto_penalidad_acumulada')
+    can_delete = False
+    classes = ['collapse']
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+# ==================================================
+# === CONFIGURACIÓN DE MODELADMINS ===
 # ==================================================
 
 @admin.register(Cliente)
 class ClienteAdmin(admin.ModelAdmin):
     list_display = ('id', 'nombres', 'apellidos', 'numero_documento', 'user', 'fecha_registro')
     search_fields = ('nombres', 'apellidos', 'numero_documento', 'user__username')
-    list_filter = ('fecha_registro',)
+    list_filter = ('fecha_registro', 'estado_civil', 'sexo')
     actions = [generate_temporary_password]
+    readonly_fields = ('fecha_registro',)
 
+    fieldsets = (
+        ('Información Personal', {
+            'fields': (('nombres', 'apellidos'), 'apodo', ('sexo', 'estado_civil'), 'fecha_nacimiento')
+        }),
+        ('Información de Contacto', {
+            'fields': ('email', 'telefono', 'direccion')
+        }),
+        ('Documentación', {
+            'fields': (('tipo_documento', 'numero_documento'),)
+        }),
+        ('Información Laboral', {
+            'classes': ('collapse',),
+            'fields': ('nombre_empresa', 'cargo', 'telefono_trabajo', 'ingresos_mensuales', 'fecha_ingreso_trabajo', 'trabajo_actual')
+        }),
+        ('Portal de Acceso', {
+            'fields': ('user', 'debe_cambiar_contrasena')
+        }),
+    )
 
 @admin.register(Prestamo)
 class PrestamoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'cliente', 'monto', 'tasa_interes', 'plazo', 'estado', 'fecha_desembolso')
+    list_display = ('id', 'cliente', 'monto', 'estado', 'fecha_desembolso', 'frecuencia_pago')
     search_fields = ('cliente__nombres', 'cliente__apellidos', 'id')
-    list_filter = ('estado', 'fecha_desembolso', 'tipo_prestamo')
-    # Para facilitar la navegación, hacemos que el campo 'cliente' sea un enlace a la página de edición del cliente.
+    list_filter = ('estado', 'frecuencia_pago', 'tipo_prestamo', 'fecha_desembolso')
     list_display_links = ('id', 'cliente')
+    readonly_fields = ('fecha_creacion', 'total_gastos_asociados', 'monto_desembolsado')
+    inlines = [GastoPrestamoInline, CuotaInline]
 
-@admin.register(Cuota)
-class CuotaAdmin(admin.ModelAdmin):
-    list_display = ('id', 'prestamo', 'numero_cuota', 'monto_cuota', 'fecha_vencimiento', 'estado')
-    search_fields = ('prestamo__cliente__nombres', 'prestamo__id')
-    list_filter = ('estado', 'fecha_vencimiento')
-
-@admin.register(Pago)
-class PagoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'cuota', 'monto_pagado', 'fecha_pago')
-    search_fields = ('cuota__prestamo__id',)
-    list_filter = ('fecha_pago',)
+    fieldsets = (
+        (None, {
+            'fields': (('cliente', 'tipo_prestamo'), 'estado')
+        }),
+        ('Detalles Financieros', {
+            'fields': ('monto', ('tasa_interes', 'periodo_tasa'), 'manejo_gastos', 'total_gastos_asociados', 'monto_desembolsado')
+        }),
+        ('Plazos y Frecuencia', {
+            'fields': (('plazo', 'frecuencia_pago'), ('fecha_desembolso', 'fecha_inicio_pago'))
+        }),
+        ('Configuración Adicional', {
+            'classes': ('collapse',),
+            'fields': ('tipo_amortizacion', 'garante', 'fecha_creacion')
+        }),
+    )
 
 @admin.register(TipoPrestamo)
 class TipoPrestamoAdmin(admin.ModelAdmin):
@@ -77,14 +116,13 @@ class TipoPrestamoAdmin(admin.ModelAdmin):
 @admin.register(Capital)
 class CapitalAdmin(admin.ModelAdmin):
     list_display = ('monto_inicial', 'fecha_registro')
+    readonly_fields = ('fecha_registro',)
+
+    def has_add_permission(self, request):
+        # Permitir añadir solo si no existe ningún registro de capital
+        return not Capital.objects.exists()
 
 @admin.register(TipoGasto)
 class TipoGastoAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'descripcion')
     search_fields = ('nombre',)
-
-@admin.register(GastoPrestamo)
-class GastoPrestamoAdmin(admin.ModelAdmin):
-    list_display = ('prestamo', 'tipo_gasto', 'monto')
-    search_fields = ('prestamo__id', 'tipo_gasto__nombre')
-    list_filter = ('tipo_gasto',)

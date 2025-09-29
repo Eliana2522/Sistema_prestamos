@@ -59,6 +59,15 @@ class ClienteForm(forms.ModelForm):
             raise forms.ValidationError("Los apellidos no deben contener números.")
         return apellidos
 
+    def clean_fecha_nacimiento(self):
+        fecha_nacimiento = self.cleaned_data.get('fecha_nacimiento')
+        if fecha_nacimiento:
+            today = date.today()
+            age = today.year - fecha_nacimiento.year - ((today.month, today.day) < (fecha_nacimiento.month, fecha_nacimiento.day))
+            if age < 18:
+                raise forms.ValidationError("El cliente debe tener al menos 18 años de edad.")
+        return fecha_nacimiento
+
     def clean(self):
         cleaned_data = super().clean()
         tipo_documento = cleaned_data.get('tipo_documento')
@@ -113,7 +122,6 @@ class PrestamoForm(forms.ModelForm):
             'fecha_desembolso',
             'frecuencia_pago',
             'tipo_amortizacion',
-            'tasa_mora',
             'fecha_inicio_pago',
             'manejo_gastos',
         ]
@@ -133,7 +141,6 @@ class PrestamoForm(forms.ModelForm):
             'fecha_desembolso': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'frecuencia_pago': forms.Select(attrs={'class': 'form-control'}),
             'tipo_amortizacion': forms.Select(attrs={'class': 'form-control'}),
-            'tasa_mora': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'fecha_inicio_pago': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'manejo_gastos': forms.RadioSelect(attrs={'class': 'form-check-input'}),
         }
@@ -141,7 +148,6 @@ class PrestamoForm(forms.ModelForm):
             'monto': 'Monto Solicitado por el Cliente',
             'tasa_interes': 'Tasa de Interés',
             'periodo_tasa': 'Período de la Tasa',
-            'tasa_mora': 'Tasa de Mora',
             'fecha_inicio_pago': 'Fecha de Inicio de Pago',
             'tipo_amortizacion': 'Tipo de Amortización',
             'manejo_gastos': 'Manejo de Gastos Adicionales',
@@ -285,4 +291,19 @@ class GaranteForm(forms.ModelForm):
             'cedula': forms.TextInput(attrs={'class': 'form-control'}),
             'lugar_trabajo': forms.TextInput(attrs={'class': 'form-control'}),
             'ingresos_mensuales': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
+
+class LoanRequestForm(forms.ModelForm):
+    class Meta:
+        model = Prestamo
+        fields = ['tipo_prestamo', 'monto', 'plazo']
+        widgets = {
+            'tipo_prestamo': forms.Select(attrs={'class': 'form-control'}),
+            'monto': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Monto que deseas solicitar'}),
+            'plazo': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'En meses'}),
+        }
+        labels = {
+            'tipo_prestamo': 'Tipo de Préstamo que Deseas',
+            'monto': 'Monto Solicitado',
+            'plazo': 'Plazo en Meses',
         }

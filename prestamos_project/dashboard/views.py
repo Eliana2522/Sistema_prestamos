@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Value, DecimalField, Count, F, Q
 from django.db.models.functions import Coalesce
-from gestion_prestamos.forms import ClienteForm, PrestamoForm, PagoForm, TipoPrestamoForm, GastoPrestamoForm, RequisitoForm, GaranteForm
+from gestion_prestamos.forms import ClienteForm, PrestamoForm, PagoForm, TipoPrestamoForm, GastoPrestamoForm, RequisitoForm, GaranteForm, LoanRequestForm
 from gestion_prestamos.models import Prestamo, Cliente, Pago, Cuota, TipoPrestamo, Capital, GastoPrestamo, TipoGasto, Requisito
 from django.forms import modelformset_factory
 from gestion_prestamos.utils import calcular_tabla_amortizacion, calcular_penalidad_cuota
@@ -589,13 +589,19 @@ def portal_dashboard(request):
     except Cliente.DoesNotExist:
         return redirect('client_login')
 
+    # Forzar cambio de contraseña si es necesario
+    if cliente.debe_cambiar_contrasena:
+        messages.info(request, 'Por tu seguridad, es necesario que cambies tu contraseña antes de continuar.')
+        return redirect('client_change_password')
+
     # Obtener todos los préstamos del cliente
     prestamos = Prestamo.objects.filter(cliente=cliente).order_by('-fecha_desembolso')
     
     # Encontrar el préstamo activo y su información relevante
-    prestamo_activo = prestamos.filter(estado='activo').first()
+    prestamo_activo = prestamos.filter(estado='aprobado').first()
     proxima_cuota = None
     saldo_pendiente_total = Decimal('0.00')
+    proximo_pago_mensaje = None
 
     if prestamo_activo:
         # Usamos todas las cuotas para el saldo, pero solo las pendientes para la próxima cuota
@@ -603,6 +609,13 @@ def portal_dashboard(request):
         cuotas_pendientes = todas_las_cuotas.filter(estado__in=['pendiente', 'pagada_parcialmente']).order_by('fecha_vencimiento')
         proxima_cuota = cuotas_pendientes.first()
         
+        if proxima_cuota:
+            dias_para_vencimiento = (proxima_cuota.fecha_vencimiento - timezone.now().date()).days
+            if 0 <= dias_para_vencimiento <= 7:
+                proximo_pago_mensaje = f"Recordatorio: Su próxima cuota de ${proxima_cuota.monto_cuota:,.2f} vence en {dias_para_vencimiento} día(s) (el {proxima_cuota.fecha_vencimiento.strftime('%d/%m/%Y')})."
+            elif dias_para_vencimiento < 0:
+                proximo_pago_mensaje = f"¡Atención! Su cuota de ${proxima_cuota.monto_cuota:,.2f} está vencida desde el {proxima_cuota.fecha_vencimiento.strftime('%d/%m/%Y')}."
+
         for cuota in todas_las_cuotas:
             saldo_pendiente_total += (cuota.monto_cuota - cuota.total_pagado)
 
@@ -612,8 +625,11 @@ def portal_dashboard(request):
         'prestamo_activo': prestamo_activo,
         'proxima_cuota': proxima_cuota,
         'saldo_pendiente_total': saldo_pendiente_total,
+        'proximo_pago_mensaje': proximo_pago_mensaje,
     }
     return render(request, 'portal/dashboard.html', context)
+
+from django.contrib.auth import update_session_auth_hash
 
 class ClientPasswordChangeView(PasswordChangeView):
     template_name = 'portal/change_password_form.html'
@@ -621,6 +637,9 @@ class ClientPasswordChangeView(PasswordChangeView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
+        # Actualiza la sesión del usuario para que no se cierre tras cambiar la contraseña.
+        update_session_auth_hash(self.request, form.user)
+
         try:
             cliente = self.request.user.cliente_profile
             if cliente.debe_cambiar_contrasena:
@@ -658,3 +677,124 @@ def client_logout_view(request):
     logout(request)
     messages.success(request, 'Has cerrado sesión exitosamente. ¡Vuelve pronto!')
     return redirect('client_login')
+
+@login_required
+def request_loan(request):
+    """
+    Permite a un cliente autenticado solicitar un nuevo préstamo.
+    """
+    if request.user.is_staff:
+        messages.error(request, "Esta sección es solo para clientes.")
+        return redirect('panel_informativo')
+
+    try:
+        cliente = request.user.cliente_profile
+    except Cliente.DoesNotExist:
+        messages.error(request, "No tienes un perfil de cliente asociado.")
+        return redirect('client_login')
+
+    # Validación: Comprobar si el cliente ya tiene un préstamo activo o solicitado
+    if Prestamo.objects.filter(cliente=cliente, estado__in=['pendiente', 'aprobado']).exists():
+        messages.warning(request, 'Ya tienes un préstamo activo o una solicitud en proceso. No puedes solicitar uno nuevo en este momento.')
+        return redirect('portal_dashboard')
+
+    if request.method == 'POST':
+        form = LoanRequestForm(request.POST)
+        if form.is_valid():
+            prestamo = form.save(commit=False)
+            prestamo.cliente = cliente
+            prestamo.estado = 'pendiente'
+            
+            # Asignar valores predeterminados o nulos a campos que el admin llenará
+            tipo_prestamo = form.cleaned_data.get('tipo_prestamo')
+            prestamo.tasa_interes = tipo_prestamo.tasa_interes_predeterminada if tipo_prestamo else 0
+            prestamo.periodo_tasa = tipo_prestamo.periodo_tasa if tipo_prestamo else 'anual'
+            prestamo.frecuencia_pago = 'mensual' # O un valor predeterminado
+            prestamo.tipo_amortizacion = 'saldo_insoluto' # O un valor predeterminado
+            prestamo.fecha_desembolso = timezone.now().date() # Temporal, el admin lo cambiará
+            
+            prestamo.save()
+            messages.success(request, 'Tu solicitud de préstamo ha sido enviada exitosamente. Un agente la revisará pronto.')
+            return redirect('portal_dashboard')
+    else:
+        form = LoanRequestForm()
+
+    context = {
+        'form': form
+    }
+    return render(request, 'portal/request_loan.html', context)
+
+
+@login_required
+def loan_application_list(request):
+    """Muestra una lista de todas las solicitudes de préstamo pendientes."""
+    query = request.GET.get('q')
+    prestamos = Prestamo.objects.filter(estado='pendiente').select_related('cliente').order_by('-fecha_creacion')
+    if query:
+        prestamos = prestamos.filter(
+            Q(id__icontains=query) |
+            Q(cliente__nombres__icontains=query) |
+            Q(cliente__apellidos__icontains=query) |
+            Q(cliente__numero_documento__icontains=query)
+        )
+    context = {
+        'prestamos': prestamos,
+        'query': query,
+        'page_title': 'Solicitudes de Préstamo'
+    }
+    return render(request, 'dashboard/loan_application_list.html', context)
+
+
+@login_required
+def loan_application_detail(request, pk):
+    """Muestra los detalles de una solicitud de préstamo para su revisión."""
+    prestamo = get_object_or_404(Prestamo, pk=pk, estado='pendiente')
+
+    if request.method == 'POST':
+        # Esto es un placeholder para el futuro. Por ahora, solo mostramos el detalle.
+        pass
+
+    context = {
+        'prestamo': prestamo,
+    }
+    return render(request, 'dashboard/loan_application_detail.html', context)
+
+@login_required
+def loan_application_approve(request, pk):
+    """Aprueba una solicitud de préstamo."""
+    prestamo = get_object_or_404(Prestamo, pk=pk, estado='pendiente')
+    if request.method == 'POST':
+        prestamo.estado = 'aprobado'
+        prestamo.fecha_desembolso = timezone.now().date() # Asignar fecha de desembolso
+        prestamo.save()
+        
+        # Generar tabla de amortización
+        try:
+            tabla_amortizacion = calcular_tabla_amortizacion(prestamo)
+            for item_cuota in tabla_amortizacion:
+                Cuota.objects.create(
+                    prestamo=prestamo,
+                    numero_cuota=item_cuota['numero_cuota'],
+                    fecha_vencimiento=item_cuota['fecha_vencimiento'],
+                    monto_cuota=item_cuota['cuota_fija'],
+                    capital=item_cuota['capital'],
+                    interes=item_cuota['interes'],
+                    saldo_pendiente=item_cuota['saldo_pendiente']
+                )
+            messages.success(request, f"La solicitud de préstamo #{prestamo.id} ha sido aprobada y movida a préstamos activos.")
+        except Exception as e:
+            messages.error(request, f"Error al generar la tabla de amortización para el préstamo #{prestamo.id}: {e}")
+            prestamo.estado = 'pendiente' # Revertir estado si falla
+            prestamo.save()
+
+    return redirect('loan_application_list')
+
+@login_required
+def loan_application_reject(request, pk):
+    """Rechaza una solicitud de préstamo."""
+    prestamo = get_object_or_404(Prestamo, pk=pk, estado='pendiente')
+    if request.method == 'POST':
+        prestamo.estado = 'rechazado'
+        prestamo.save()
+        messages.warning(request, f"La solicitud de préstamo #{prestamo.id} ha sido rechazada.")
+    return redirect('loan_application_list')

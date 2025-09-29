@@ -48,17 +48,23 @@
     <!-- =================================== -->
     <header class="top-navbar">
         <!-- Botón Hamburguesa para pantallas pequeñas (visible solo en móvil/tablet) -->
-        <button class="btn btn-dark d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu">
+                <button class="btn btn-outline-secondary d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu">
             <i class="fa-solid fa-bars"></i>
         </button>
 
         <!-- Logo de la empresa a la izquierda -->
-        <div class="logo">HEM Lending</div>
+        <a class="navbar-brand" href="{% url 'panel_informativo' %}">
+            <img src="{% static 'img/LogoHEM.png' %}" alt="HEM Lending Logo" style="height: 50px; vertical-align: middle;" class="me-2">
+            <span style="vertical-align: middle;">
+                <strong class="d-block" style="font-size: 1.2rem; color: #2c3e50;">HEM Lending</strong>
+                <small class="d-block" style="font-size: 0.8rem; color: #566573;">Dinero rápido, decisiones inteligentes.</small>
+            </span>
+        </a>
         
         <!-- Navegación de usuario a la derecha (usando Dropdown de Bootstrap) -->
         <nav class="user-nav ms-auto">
             <div class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fa-solid fa-user-circle"></i> {{ user.username }}
               </a>
               <ul class="dropdown-menu dropdown-menu-end">
@@ -112,6 +118,7 @@
                             <i class="fa-solid fa-hand-holding-dollar fa-fw me-2"></i>Préstamos
                         </a>
                         <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'loan_application_list' %}">Solicitudes de Préstamo</a></li>
                             <li><a class="dropdown-item" href="{% url 'loan_list' %}">Ver Préstamos Activos</a></li>
                             <li><a class="dropdown-item" href="{% url 'loan_add' %}">Registrar Nuevo Préstamo</a></li>
                             <li><a class="dropdown-item" href="{% url 'paid_loan_list' %}">Ver Préstamos Pagados</a></li>

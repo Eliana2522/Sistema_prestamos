@@ -10,6 +10,7 @@ portal_patterns = [
     path('dashboard/', views.portal_dashboard, name='portal_dashboard'),
     path('prestamo/<int:pk>/', views.portal_loan_detail, name='portal_loan_detail'),
     path('change-password/', views.client_change_password, name='client_change_password'),
+    path('request-loan/', views.request_loan, name='portal_request_loan'),
 
     # Flujo de Reseteo de Contraseña
     path('password_reset/', auth_views.PasswordResetView.as_view(template_name='portal/password_reset_form.html'), name='client_password_reset'),
@@ -45,6 +46,10 @@ urlpatterns = [
     # Muestra la lista de préstamos activos.
     # path('prestamos/activos/', views.loan_list, name='loan_list'),
     path('prestamos/activos/', views_cbv.LoanListView.as_view(), name='loan_list'),
+    path('prestamos/solicitudes/', views.loan_application_list, name='loan_application_list'),
+    path('prestamos/solicitudes/<int:pk>/', views.loan_application_detail, name='loan_application_detail'),
+    path('prestamos/solicitudes/<int:pk>/aprobar/', views.loan_application_approve, name='loan_application_approve'),
+    path('prestamos/solicitudes/<int:pk>/rechazar/', views.loan_application_reject, name='loan_application_reject'),
     path('prestamos/pagados/', views.paid_loan_list, name='paid_loan_list'),
 
     # --- URLs para Pagos ---

@@ -33,7 +33,11 @@
 </head>
 <body>
     <div class="login-container">
-        <div class="logo">HEM Lending</div>
+                <div class="text-center mb-4">
+            <img src="{% static 'img/LogoHEM.png' %}" alt="HEM Lending Logo" style="height: 60px;" class="mb-3">
+            <h1 style="font-size: 1.8rem; color: #2c3e50; font-weight: 700;">HEM Lending</h1>
+            <p style="font-size: 1rem; color: #566573;">Dinero rápido, decisiones inteligentes.</p>
+        </div>
         
         {% if messages %}
             {% for message in messages %}

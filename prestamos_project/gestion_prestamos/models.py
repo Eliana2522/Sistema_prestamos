@@ -206,7 +206,9 @@ class TipoPrestamo(models.Model):
 class Prestamo(models.Model):
     # Define las opciones para el campo `estado`. Esto crea un menú desplegable en el admin.
     ESTADO_CHOICES = [
-        ('activo', 'Activo'),
+        ('pendiente', 'Pendiente'),
+        ('aprobado', 'Aprobado'),
+        ('rechazado', 'Rechazado'),
         ('pagado', 'Pagado'),
         ('vencido', 'Vencido'),
     ]
@@ -241,7 +243,6 @@ class Prestamo(models.Model):
     monto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Monto del Préstamo")
     tasa_interes = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Tasa de Interés", help_text="En porcentaje (%)")
     periodo_tasa = models.CharField(max_length=10, choices=TipoPrestamo.PERIODO_TASA_CHOICES, default='anual', verbose_name="Periodo de la Tasa")
-    tasa_mora = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Tasa de Mora Anual", help_text="En porcentaje (%)", null=True, blank=True)
     
     # `IntegerField` es para números enteros.
     plazo = models.IntegerField(verbose_name="Plazo", help_text="En meses")
@@ -251,7 +252,7 @@ class Prestamo(models.Model):
     fecha_inicio_pago = models.DateField(verbose_name="Fecha de Inicio de Pago", null=True, blank=True)
     
     # `choices` limita los valores de este campo a las opciones definidas en `ESTADO_CHOICES`.
-    estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='activo', verbose_name="Estado")
+    estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='pendiente', verbose_name="Estado")
     
     # Nuevo campo para la frecuencia de pago
     frecuencia_pago = models.CharField(
@@ -327,7 +328,7 @@ class Prestamo(models.Model):
         constraints = [
             UniqueConstraint(
                 fields=['cliente'],
-                condition=Q(estado='activo'),
+                condition=Q(estado='aprobado'),
                 name='unique_active_loan_per_client'
             )
         ]

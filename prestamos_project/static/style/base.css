@@ -1,5 +1,3 @@
-
-
 /*
   base.css
 
@@ -22,7 +20,7 @@ body {
     padding: 0;
     background-color: #f4f6f9; /* NUEVO: Fondo principal gris muy claro */
     color: #34495e; /* NUEVO: Color de texto principal */
-    padding-top: 60px; 
+    padding-top: 80px; 
 }
 
 /* ================================================ */
@@ -33,30 +31,51 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
-    height: 60px;
-    background-color: #2c3e50; /* NUEVO: Azul oscuro elegante */
-    color: white;
+    height: 80px;
+    background-color: #fff;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 1000;
-    border-bottom: 3px solid #233140; /* NUEVO: Borde más oscuro */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06); /* Sombra sutil */
 }
 
-.top-navbar .logo {
-    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    font-weight: 700; /* Más audaz */
-    font-size: 1.8em; /* Ligeramente más grande */
-    letter-spacing: 1px;
-    /* Efecto de texto con degradado */
-    background: linear-gradient(45deg, #3498db, #1abc9c);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-fill-color: transparent;
-    /* Sombra sutil para levantar el texto */
-    text-shadow: 0px 0px 3px rgba(255, 255, 255, 0.2);
+/* --- Logo Styles --- */
+
+/* Main Navbar Logo */
+.navbar-brand {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+.navbar-brand img {
+    transition: opacity 0.2s ease;
+}
+.navbar-brand img:hover {
+    opacity: 0.9;
+}
+
+/* Portal & Login Page Logo */
+.portal-logo-container {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+.portal-logo-container img {
+    height: 75px;
+    width: auto;
+    max-width: 80%; /* Prevent overflow on very small screens */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .navbar-brand img {
+        height: 50px;
+    }
+    .portal-logo-container img {
+        height: 65px;
+    }
 }
 
 
@@ -74,7 +93,7 @@ body {
 }
 
 .user-nav .user-menu > a {
-    color: white;
+    color: #333;
     text-decoration: none;
     padding: 10px;
     display: flex;
@@ -153,7 +172,7 @@ body {
     background-color: #FFFFFF;
     color: #333;
     position: fixed;
-    top: 60px;
+    top: 80px;
     left: 0;
     bottom: 0;
     padding: 15px 0;
@@ -162,6 +181,7 @@ body {
     overflow-y: auto;
     border-right: 1px solid #E9ECEF;
     transition: width 0.2s;
+    box-shadow: 4px 0 15px -5px rgba(0, 0, 0, 0.07);
 }
 
 .vertical-navbar ul {
@@ -711,3 +731,23 @@ form p > label {
     font-weight: 600;
     color: #2c3e50;
 }
+
+/* ================================= */
+/* === ESTILOS PÁGINA DE PERFIL === */
+/* ================================= */
+
+.profile-card .card-header {
+    background-color: #FFFFFF; /* Asegura fondo blanco */
+    border-bottom: 1px solid #E9ECEF; /* Línea sutil de separación */
+    padding: 1.5rem;
+}
+
+.profile-card .card-header h4 {
+    color: #2c3e50; /* Color de título oscuro y profesional */
+    font-weight: 600;
+}
+
+.profile-icon-color {
+    color: #85929E; /* Un gris sutil y elegante */
+}
+
