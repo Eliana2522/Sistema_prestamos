@@ -282,6 +282,7 @@ class Prestamo(models.Model):
     garante = models.ForeignKey('Garante', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Garante")
 
     fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
+    fecha_aprobacion = models.DateTimeField(null=True, blank=True, verbose_name="Fecha de Aprobación")
 
     def __str__(self):
         return f"Préstamo #{self.id} - {self.cliente.nombres} {self.cliente.apellidos}"

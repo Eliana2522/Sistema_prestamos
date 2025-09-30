@@ -48,7 +48,17 @@
                     <td>{{ prestamo.plazo }}</td>
                     <td>{{ prestamo.fecha_creacion|date:"d/m/Y" }}</td>
                     <td>
-                        <a href="{% url 'loan_detail' pk=prestamo.id %}" class="btn btn-primary btn-sm">Revisar Solicitud</a>
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'loan_application_detail' pk=prestamo.id %}" class="btn btn-info btn-sm">Revisar</a>
+                            <form action="{% url 'loan_application_approve' pk=prestamo.id %}" method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success btn-sm">Aprobar</button>
+                            </form>
+                            <form action="{% url 'loan_application_reject' pk=prestamo.id %}" method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm">Rechazar</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}

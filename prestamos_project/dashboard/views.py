@@ -43,7 +43,7 @@ def panel_informativo(request):
 
     # --- ESTADÍSTICAS GENERALES ---
     total_clientes = Cliente.objects.count()
-    total_prestamos_activos = Prestamo.objects.filter(estado='activo').count()
+    total_prestamos_activos = Prestamo.objects.filter(estado='aprobado').count()
     
     # --- AGENDA DE COBROS AMPLIADA ---
     fecha_hoy = hoy.date()
@@ -236,6 +236,7 @@ def loan_add(request):
                 garante = garante_form.save()
                 prestamo.garante = garante
 
+            prestamo.estado = 'aprobado'  # Asignar estado 'aprobado'
             prestamo.save()
 
             # Guardar gastos
@@ -350,7 +351,7 @@ def loan_detail(request, pk):
 def loan_list(request):
     """Muestra una lista de todos los préstamos activos con funcionalidad de búsqueda."""
     query = request.GET.get('q')
-    prestamos = Prestamo.objects.filter(estado='activo').select_related('cliente').order_by('-fecha_creacion')
+    prestamos = Prestamo.objects.filter(estado='aprobado').select_related('cliente').order_by('-fecha_creacion')
     if query:
         prestamos = prestamos.filter(
             Q(id__icontains=query) |
@@ -517,14 +518,14 @@ def financial_details(request):
     ganancia_realizada = cuotas_pagadas.aggregate(total=Coalesce(Sum('interes'), Decimal('0.00')))['total']
     cartera_activa = total_desembolsado - capital_devuelto
     ganancia_potencial = Cuota.objects.filter(
-        prestamo__estado='activo', 
+        prestamo__estado='aprobado', 
         estado__in=['pendiente', 'pagada_parcialmente']
     ).aggregate(total=Coalesce(Sum('interes'), Decimal('0.00')))['total']
-    num_prestamos_activos = Prestamo.objects.filter(estado='activo').count()
+    num_prestamos_activos = Prestamo.objects.filter(estado='aprobado').count()
     num_prestamos_pagados = Prestamo.objects.filter(estado='pagado').count()
     hoy = timezone.now()
     prestamos_en_atraso = Prestamo.objects.filter(
-        estado='activo',
+        estado='aprobado',
         cuotas__fecha_vencimiento__lt=hoy,
         cuotas__estado__in=['pendiente', 'pagada_parcialmente']
     ).distinct().count()
@@ -602,8 +603,13 @@ def portal_dashboard(request):
     proxima_cuota = None
     saldo_pendiente_total = Decimal('0.00')
     proximo_pago_mensaje = None
+    mensaje_aprobacion = None
 
     if prestamo_activo:
+        # Mensaje de aprobación reciente
+        if prestamo_activo.fecha_aprobacion and (timezone.now() - prestamo_activo.fecha_aprobacion).days < 1:
+            mensaje_aprobacion = "¡Tu préstamo ha sido aprobado! Será desembolsado en las próximas 24 horas."
+
         # Usamos todas las cuotas para el saldo, pero solo las pendientes para la próxima cuota
         todas_las_cuotas = prestamo_activo.cuotas.all()
         cuotas_pendientes = todas_las_cuotas.filter(estado__in=['pendiente', 'pagada_parcialmente']).order_by('fecha_vencimiento')
@@ -626,6 +632,7 @@ def portal_dashboard(request):
         'proxima_cuota': proxima_cuota,
         'saldo_pendiente_total': saldo_pendiente_total,
         'proximo_pago_mensaje': proximo_pago_mensaje,
+        'mensaje_aprobacion': mensaje_aprobacion,
     }
     return render(request, 'portal/dashboard.html', context)
 
@@ -766,26 +773,30 @@ def loan_application_approve(request, pk):
     if request.method == 'POST':
         prestamo.estado = 'aprobado'
         prestamo.fecha_desembolso = timezone.now().date() # Asignar fecha de desembolso
+        prestamo.fecha_aprobacion = timezone.now() # Asignar fecha de aprobación
         prestamo.save()
         
-        # Generar tabla de amortización
-        try:
-            tabla_amortizacion = calcular_tabla_amortizacion(prestamo)
-            for item_cuota in tabla_amortizacion:
-                Cuota.objects.create(
-                    prestamo=prestamo,
-                    numero_cuota=item_cuota['numero_cuota'],
-                    fecha_vencimiento=item_cuota['fecha_vencimiento'],
-                    monto_cuota=item_cuota['cuota_fija'],
-                    capital=item_cuota['capital'],
-                    interes=item_cuota['interes'],
-                    saldo_pendiente=item_cuota['saldo_pendiente']
-                )
+        # Generar tabla de amortización solo si no existe
+        if not prestamo.cuotas.exists():
+            try:
+                tabla_amortizacion = calcular_tabla_amortizacion(prestamo)
+                for item_cuota in tabla_amortizacion:
+                    Cuota.objects.create(
+                        prestamo=prestamo,
+                        numero_cuota=item_cuota['numero_cuota'],
+                        fecha_vencimiento=item_cuota['fecha_vencimiento'],
+                        monto_cuota=item_cuota['cuota_fija'],
+                        capital=item_cuota['capital'],
+                        interes=item_cuota['interes'],
+                        saldo_pendiente=item_cuota['saldo_pendiente']
+                    )
+                messages.success(request, f"La solicitud de préstamo #{prestamo.id} ha sido aprobada y movida a préstamos activos.")
+            except Exception as e:
+                messages.error(request, f"Error al generar la tabla de amortización para el préstamo #{prestamo.id}: {e}")
+                prestamo.estado = 'pendiente' # Revertir estado si falla
+                prestamo.save()
+        else:
             messages.success(request, f"La solicitud de préstamo #{prestamo.id} ha sido aprobada y movida a préstamos activos.")
-        except Exception as e:
-            messages.error(request, f"Error al generar la tabla de amortización para el préstamo #{prestamo.id}: {e}")
-            prestamo.estado = 'pendiente' # Revertir estado si falla
-            prestamo.save()
 
     return redirect('loan_application_list')
 

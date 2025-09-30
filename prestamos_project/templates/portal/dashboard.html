@@ -18,6 +18,12 @@
     </div>
 {% endif %}
 
+{% if mensaje_aprobacion %}
+    <div class="alert alert-success" role="alert">
+        {{ mensaje_aprobacion }}
+    </div>
+{% endif %}
+
 {% if prestamos %}
     <div class="row row-cols-1 row-cols-md-2 g-4">
         {% for prestamo in prestamos %}

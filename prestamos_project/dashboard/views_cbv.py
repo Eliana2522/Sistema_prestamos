@@ -90,7 +90,7 @@ class LoanListView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        queryset = super().get_queryset().filter(estado='activo').select_related('cliente').order_by('-fecha_creacion')
+        queryset = super().get_queryset().filter(estado='aprobado').select_related('cliente').order_by('-fecha_creacion')
         query = self.request.GET.get('q')
         if query:
             queryset = queryset.filter(
