@@ -1,0 +1,52 @@
+{% extends 'portal/base_portal.html' %}
+
+{% block title %}Solicitar Préstamo{% endblock %}
+
+{% block portal_content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="h3 mb-0">Solicitud de Nuevo Préstamo</h1>
+    </div>
+    <div class="card-body">
+        <p class="card-text">Completa el siguiente formulario para solicitar un nuevo préstamo. Un agente revisará tu solicitud y se pondrá en contacto contigo.</p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                {{ form.tipo_prestamo.label_tag }}
+                {{ form.tipo_prestamo }}
+                {% if form.tipo_prestamo.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.tipo_prestamo.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form.monto.label_tag }}
+                {{ form.monto }}
+                {% if form.monto.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.monto.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form.plazo.label_tag }}
+                {{ form.plazo }}
+                {% if form.plazo.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.plazo.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">Enviar Solicitud</button>
+            <a href="{% url 'portal_dashboard' %}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,445 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Nuevo Préstamo{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Encabezado de la página -->
+    <header class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="fa-solid fa-hand-holding-dollar"></i> Registrar Nuevo Préstamo</h1>
+            <p class="text-muted">Completa los detalles del préstamo y los gastos asociados.</p>
+        </div>
+        <a href="{% url 'loan_list' %}" class="btn btn-secondary">Cancelar y Volver</a>
+    </header>
+
+    <div class="content-container">
+        <form method="post" id="loan-form" novalidate>
+            {% csrf_token %}
+            {% include 'includes/_messages.html' %}
+            
+            <!-- Sección de Detalles del Préstamo -->
+            <section class="mb-5">
+                <h4 class="mb-3">1. Detalles del Préstamo</h4>
+                
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors.as_text }}</div>
+                {% endif %}
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.cliente.label_tag }}
+                        {{ form.cliente }}
+                        {% if form.cliente.errors %}<div class="invalid-feedback d-block">{{ form.cliente.errors.as_text }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.tipo_prestamo.label_tag }}
+                        {{ form.tipo_prestamo }}
+                        {% if form.tipo_prestamo.errors %}<div class="invalid-feedback d-block">{{ form.tipo_prestamo.errors.as_text }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.monto.label_tag }}
+                        {{ form.monto }}
+                        <small id="monto-ayuda" class="form-text text-danger"></small>
+                        {% if form.monto.errors %}<div class="invalid-feedback d-block">{{ form.monto.errors.as_text }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.tasa_interes.label_tag }}
+                        {{ form.tasa_interes }}
+                        {% if form.tasa_interes.errors %}<div class="invalid-feedback d-block">{{ form.tasa_interes.errors.as_text }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.periodo_tasa.label_tag }}
+                        {{ form.periodo_tasa }}
+                        {% if form.periodo_tasa.errors %}<div class="invalid-feedback d-block">{{ form.periodo_tasa.errors.as_text }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.plazo.label_tag }}
+                        {{ form.plazo }}
+                        <small id="plazo-ayuda" class="form-text text-muted"></small>
+                        {% if form.plazo.errors %}<div class="invalid-feedback d-block">{{ form.plazo.errors.as_text }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.frecuencia_pago.label_tag }}
+                        {{ form.frecuencia_pago }}
+                        {% if form.frecuencia_pago.errors %}<div class="invalid-feedback d-block">{{ form.frecuencia_pago.errors.as_text }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.fecha_desembolso.label_tag }}
+                        {{ form.fecha_desembolso }}
+                        {% if form.fecha_desembolso.errors %}<div class="invalid-feedback d-block">{{ form.fecha_desembolso.errors.as_text }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.fecha_inicio_pago.label_tag }}
+                        {{ form.fecha_inicio_pago }}
+                        {% if form.fecha_inicio_pago.errors %}<div class="invalid-feedback d-block">{{ form.fecha_inicio_pago.errors.as_text }}</div>{% endif %}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.tipo_amortizacion.label_tag }}
+                        {{ form.tipo_amortizacion }}
+                        {% if form.tipo_amortizacion.errors %}<div class="invalid-feedback d-block">{{ form.tipo_amortizacion.errors.as_text }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.tasa_mora.label_tag }}
+                        {{ form.tasa_mora }}
+                        {% if form.tasa_mora.errors %}<div class="invalid-feedback d-block">{{ form.tasa_mora.errors.as_text }}</div>{% endif %}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        {{ form.manejo_gastos.label_tag }}
+                        <div class="form-check">
+                            {% for radio in form.manejo_gastos %}
+                                <div class="form-check form-check-inline">
+                                    {{ radio.tag }}
+                                    <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% if form.manejo_gastos.errors %}<div class="invalid-feedback d-block">{{ form.manejo_gastos.errors.as_text }}</div>{% endif %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección de Gastos Asociados -->
+            <section class="mb-4">
+                <h4 class="mb-3">2. Gastos Asociados (Opcional)</h4>
+                <p class="text-muted small">Los montos aquí se sumarán al capital del préstamo.</p>
+                
+                {{ gasto_formset.management_form }}
+                <div id="gasto-forms-container">
+                    {% for form in gasto_formset %}
+                        <div class="row align-items-center gasto-form mb-2">
+                            <div class="col-md-4">
+                                {{ form.tipo_gasto.label_tag }}
+                                {{ form.tipo_gasto }}
+                            </div>
+                            <div class="col-md-3">
+                                {{ form.monto.label_tag }}
+                                {{ form.monto }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.descripcion.label_tag }}
+                                {{ form.descripcion }}
+                            </div>
+                            <div class="col-md-1">
+                                {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="button" id="add-gasto-form" class="btn btn-outline-primary btn-sm mt-2"><i class="fa-solid fa-plus"></i> Añadir Otro Gasto</button>
+            </section>
+
+                        <input type="hidden" name="requisitos-TOTAL_FORMS" value="{{ requisito_formset.total_form_count }}" id="id_requisitos-TOTAL_FORMS">
+            <input type="hidden" name="requisitos-INITIAL_FORMS" value="{{ requisito_formset.initial_form_count }}" id="id_requisitos-INITIAL_FORMS">
+            <input type="hidden" name="requisitos-MIN_NUM_FORMS" value="{{ requisito_formset.min_num }}" id="id_requisitos-MIN_NUM_FORMS">
+            <input type="hidden" name="requisitos-MAX_NUM_FORMS" value="{{ requisito_formset.max_num }}" id="id_requisitos-MAX_NUM_FORMS">
+
+
+            <!-- Sección de Requisitos/Garantías (Condicional) -->
+            <section id="requisitos-section" class="mb-5" style="display: none;">
+                <h4 class="mb-3">3. Requisitos y Garantías</h4>
+                <p class="text-muted small">Este tipo de préstamo requiere que se adjunten los siguientes documentos o garantías.</p>
+                
+                
+                <div id="requisito-forms-container">
+                    {% for form in requisito_formset %}
+                        <div class="row align-items-center requisito-form mb-2">
+                            <div class="col-md-3">
+                                {{ form.tipo.label_tag }}
+                                {{ form.tipo }}
+                            </div>
+                            <div class="col-md-5">
+                                {{ form.descripcion.label_tag }}
+                                {{ form.descripcion }}
+                            </div>
+                            <div class="col-md-3">
+                                {{ form.valor_estimado.label_tag }}
+                                {{ form.valor_estimado }}
+                            </div>
+                            <div class="col-md-1">
+                                {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <button type="button" id="add-requisito-form" class="btn btn-outline-primary btn-sm mt-2"><i class="fa-solid fa-plus"></i> Añadir Requisito</button>
+            </section>
+
+            <!-- Sección de Garante (Condicional) -->
+            <section id="garante-section" class="mb-5" style="display: none;">
+                <h4 class="mb-3">4. Información del Garante</h4>
+                <p class="text-muted small">Se requiere un garante para préstamos con un monto inferior a $100,000.</p>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ garante_form.nombre_completo.label_tag }}
+                        {{ garante_form.nombre_completo }}
+                        {% if garante_form.nombre_completo.errors %}<div class="invalid-feedback d-block">{{ garante_form.nombre_completo.errors.as_text }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ garante_form.cedula.label_tag }}
+                        {{ garante_form.cedula }}
+                        {% if garante_form.cedula.errors %}<div class="invalid-feedback d-block">{{ garante_form.cedula.errors.as_text }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ garante_form.lugar_trabajo.label_tag }}
+                        {{ garante_form.lugar_trabajo }}
+                        {% if garante_form.lugar_trabajo.errors %}<div class="invalid-feedback d-block">{{ garante_form.lugar_trabajo.errors.as_text }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ garante_form.ingresos_mensuales.label_tag }}
+                        {{ garante_form.ingresos_mensuales }}
+                        {% if garante_form.ingresos_mensuales.errors %}<div class="invalid-feedback d-block">{{ garante_form.ingresos_mensuales.errors.as_text }}</div>{% endif %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Acciones del Formulario -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-lg">Registrar Préstamo</button>
+                <button type="button" id="calculate-amortization" class="btn btn-info btn-lg">Calcular Amortización</button>
+                <button type="button" id="clear-form" class="btn btn-warning btn-lg">Limpiar Formulario</button>
+            </div>
+        </form>
+
+        <div id="amortization-preview" class="mt-5" style="display: none;">
+            <h4>Vista Previa de Amortización</h4>
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th># Cuota</th>
+                        <th>Fecha de Vencimiento</th>
+                        <th>Monto de la Cuota</th>
+                        <th>Capital</th>
+                        <th>Interés</th>
+                        <th>Saldo Pendiente</th>
+                    </tr>
+                </thead>
+                <tbody id="amortization-table-body">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Plantilla para nuevos formularios de gastos (oculta) -->
+<div id="gasto-form-template" style="display: none;">
+    <div class="row align-items-center gasto-form mb-2" id="gasto-form-__prefix__">
+        <div class="col-md-4">
+            {{ gasto_formset.empty_form.tipo_gasto.label_tag }}
+            {{ gasto_formset.empty_form.tipo_gasto }}
+        </div>
+        <div class="col-md-3">
+            {{ gasto_formset.empty_form.monto.label_tag }}
+            {{ gasto_formset.empty_form.monto }}
+        </div>
+        <div class="col-md-4">
+            {{ gasto_formset.empty_form.descripcion.label_tag }}
+            {{ gasto_formset.empty_form.descripcion }}
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-danger btn-sm remove-gasto-form">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Plantilla para nuevos formularios de requisitos (oculta) -->
+<div id="requisito-form-template" style="display: none;">
+    <div class="row align-items-center requisito-form mb-2" id="requisito-form-__prefix__">
+        <div class="col-md-3">{{ requisito_formset.empty_form.tipo }}</div>
+        <div class="col-md-5">{{ requisito_formset.empty_form.descripcion }}</div>
+        <div class="col-md-3">{{ requisito_formset.empty_form.valor_estimado }}</div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-danger btn-sm remove-requisito-form">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- LÓGICA PARA GASTOS DINÁMICOS ---
+    const gastoContainer = document.getElementById('gasto-forms-container');
+    const addGastoButton = document.getElementById('add-gasto-form');
+    const gastoTemplate = document.getElementById('gasto-form-template').innerHTML;
+    const totalGastoForms = document.getElementById('id_gastos-TOTAL_FORMS');
+    let gastoFormNum = {{ gasto_formset.total_form_count }};
+
+    addGastoButton.addEventListener('click', function() {
+        const newForm = gastoTemplate.replace(/__prefix__/g, gastoFormNum);
+        const div = document.createElement('div');
+        div.innerHTML = newForm;
+        gastoContainer.appendChild(div.firstElementChild);
+        totalGastoForms.value = parseInt(totalGastoForms.value) + 1;
+        gastoFormNum++;
+    });
+
+    gastoContainer.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('remove-gasto-form')) {
+            e.target.closest('.gasto-form').remove();
+            totalGastoForms.value = parseInt(totalGastoForms.value) - 1;
+        }
+    });
+
+    // --- LÓGICA PARA REQUISITOS DINÁMICOS ---
+    const requisitoContainer = document.getElementById('requisito-forms-container');
+    const addRequisitoButton = document.getElementById('add-requisito-form');
+    const requisitoTemplate = document.getElementById('requisito-form-template').innerHTML;
+    const totalRequisitoForms = document.getElementById('id_requisitos-TOTAL_FORMS');
+    let requisitoFormNum = {{ requisito_formset.total_form_count }};
+
+    addRequisitoButton.addEventListener('click', function() {
+        const newForm = requisitoTemplate.replace(/__prefix__/g, requisitoFormNum);
+        const div = document.createElement('div');
+        div.innerHTML = newForm;
+        requisitoContainer.appendChild(div.firstElementChild);
+        totalRequisitoForms.value = parseInt(totalRequisitoForms.value) + 1;
+        requisitoFormNum++;
+    });
+
+    requisitoContainer.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('remove-requisito-form')) {
+            e.target.closest('.requisito-form').remove();
+            totalRequisitoForms.value = parseInt(totalRequisitoForms.value) - 1;
+        }
+    });
+
+    // --- LÓGICA PARA DETALLES DE TIPO DE PRÉSTAMO Y VISIBILIDAD DE REQUISITOS ---
+    const tipoPrestamoSelect = document.getElementById('id_tipo_prestamo');
+    const montoInput = document.getElementById('id_monto');
+    const tasaInteresInput = document.getElementById('id_tasa_interes');
+    const montoAyuda = document.getElementById('monto-ayuda');
+    const plazoAyuda = document.getElementById('plazo-ayuda');
+    const requisitosSection = document.getElementById('requisitos-section');
+    const requisitosMensaje = document.querySelector('#requisitos-section .text-muted');
+
+    let tipoPrestamoRequiereGarantia = false;
+
+    function actualizarVisibilidadRequisitos() {
+        const monto = parseFloat(montoInput.value) || 0;
+        const montoRequiereGarantia = monto > 100000;
+
+        if (tipoPrestamoRequiereGarantia || montoRequiereGarantia) {
+            requisitosSection.style.display = 'block';
+            if (montoRequiereGarantia) {
+                requisitosMensaje.textContent = 'Se requiere garantía para préstamos mayores a $100,000.';
+            } else {
+                requisitosMensaje.textContent = 'Este tipo de préstamo requiere que se adjunten los siguientes documentos o garantías.';
+            }
+        } else {
+            requisitosSection.style.display = 'none';
+        }
+    }
+
+    tipoPrestamoSelect.addEventListener('change', function() {
+        const tipoPrestamoId = this.value;
+        if (tipoPrestamoId) {
+            fetch(`/api/tipo-prestamo/${tipoPrestamoId}/`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('La respuesta de la red no fue exitosa.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    tasaInteresInput.value = data.tasa_interes_predeterminada;
+                    montoAyuda.textContent = `Mín: ${data.monto_minimo} / Máx: ${data.monto_maximo}`;
+                    plazoAyuda.textContent = `Mín: ${data.plazo_minimo_meses} meses / Máx: ${data.plazo_maximo_meses} meses`;
+                    
+                    tipoPrestamoRequiereGarantia = data.requiere_garantia;
+                    actualizarVisibilidadRequisitos();
+                })
+                .catch(error => {
+                    console.error('Error al obtener los detalles del tipo de préstamo:', error);
+                    // Limpiar campos y ocultar sección de requisitos en caso de error
+                    tasaInteresInput.value = '';
+                    montoAyuda.textContent = 'No se pudieron cargar los detalles. Intente de nuevo.';
+                    plazoAyuda.textContent = '';
+                    tipoPrestamoRequiereGarantia = false;
+                    actualizarVisibilidadRequisitos();
+                });
+        } else {
+            tasaInteresInput.value = '';
+            montoAyuda.textContent = '';
+            plazoAyuda.textContent = '';
+            tipoPrestamoRequiereGarantia = false;
+            actualizarVisibilidadRequisitos();
+        }
+    });
+
+    montoInput.addEventListener('input', actualizarVisibilidadRequisitos);
+
+    const garanteSection = document.getElementById('garante-section');
+
+    function actualizarVisibilidadGarante() {
+        const monto = parseFloat(montoInput.value) || 0;
+        if (monto < 100000 && monto > 0) {
+            garanteSection.style.display = 'block';
+        } else {
+            garanteSection.style.display = 'none';
+        }
+    }
+
+    montoInput.addEventListener('input', actualizarVisibilidadGarante);
+
+    // Botón para limpiar el formulario
+    const clearFormButton = document.getElementById('clear-form');
+    clearFormButton.addEventListener('click', function() {
+        document.getElementById('loan-form').reset();
+        // Ocultar secciones que podrían haber aparecido
+        document.getElementById('requisitos-section').style.display = 'none';
+        document.getElementById('amortization-preview').style.display = 'none';
+    });
+
+    // Botón para calcular la amortización
+    const calculateButton = document.getElementById('calculate-amortization');
+    calculateButton.addEventListener('click', function() {
+        const formData = new FormData(document.getElementById('loan-form'));
+        fetch('/api/calculate-amortization/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.getElementById('amortization-table-body');
+            tableBody.innerHTML = ''; // Limpiar tabla anterior
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+            data.amortization_table.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.numero_cuota}</td>
+                    <td>${row.fecha_vencimiento}</td>
+                    <td>${row.cuota_fija}</td>
+                    <td>${row.capital}</td>
+                    <td>${row.interes}</td>
+                    <td>${row.saldo_pendiente}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+            document.getElementById('amortization-preview').style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Error al calcular la amortización:', error);
+            alert('Hubo un error al calcular la amortización. Revise la consola para más detalles.');
+        });
+    });
+
+    // Disparar los eventos al cargar la página para establecer el estado inicial
+    if (tipoPrestamoSelect.value) {
+        tipoPrestamoSelect.dispatchEvent(new Event('change'));
+    }
+    actualizarVisibilidadRequisitos();
+    actualizarVisibilidadGarante();
+});
+</script>
+
+{% endblock %}

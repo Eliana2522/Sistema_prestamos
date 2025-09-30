@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% load format_helpers %}
+{% load humanize %}
+
+{% block title %}Panel Informativo{% endblock %}
+
+{% block content %}
+<!-- Encabezado de la página -->
+<header class="page-header mb-4">
+    <h1><i class="fa-solid fa-chart-pie"></i> Panel Informativo</h1>
+    <p class="text-muted">Resumen financiero y actividad reciente de tu negocio.</p>
+</header>
+
+<!-- Alerta para configurar Capital Inicial -->
+{% if capital_no_configurado %}
+<div class="alert alert-warning shadow" role="alert">
+    <h4 class="alert-heading"><i class="fa-solid fa-triangle-exclamation"></i> ¡Acción Requerida!</h4>
+    <p>No has configurado tu capital inicial. Las métricas financieras no serán precisas hasta que establezcas este valor.</p>
+    <hr>
+    <p class="mb-0">
+        Por favor, ve al <a href="{% url 'admin:index' %}" class="alert-link">Panel de Administración</a>, busca la sección "Capital de la Empresa" y añade tu monto inicial.
+    </p>
+</div>
+{% endif %}
+
+
+<!-- Sección de Resumen Financiero -->
+<section class="mb-4">
+    <h3 class="mb-3">Resumen Financiero</h3>
+    <div class="row">
+        <!-- Tarjeta: Patrimonio Total -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card h-100 border-left-success shadow">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Patrimonio Total</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{ patrimonio_total|format_number }}</div>
+                            <small class="text-muted">Caja + Cartera</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fa-solid fa-shield-halved fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta: Dinero en Caja -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card h-100 border-left-primary shadow">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Dinero en Caja</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{ dinero_en_caja|format_number }}</div>
+                            <small class="text-muted">Efectivo disponible</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fa-solid fa-cash-register fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta: Cartera Activa -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card h-100 border-left-warning shadow">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Cartera Activa</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{ dinero_en_la_calle|format_number }}</div>
+                            <small class="text-muted">Capital en la calle</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fa-solid fa-hand-holding-dollar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta: Ganancia Realizada -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card h-100 border-left-info shadow">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Ganancia Realizada</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{ ganancia_realizada|format_number }}</div>
+                            <small class="text-muted">Intereses cobrados</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fa-solid fa-chart-line fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="text-right">
+        <a href="{% url 'financial_details' %}">Ver desglose financiero completo &rarr;</a>
+    </div>
+</section>
+
+<!-- Sección de Estadísticas Generales -->
+<section class="mb-4">
+    <h3 class="mb-3">Estadísticas Generales</h3>
+    <div class="row">
+        <!-- Tarjeta: Total de Clientes -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'client_list' %}" class="text-decoration-none">
+                <div class="card h-100 border-left-info shadow">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total de Clientes</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_clientes }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fa-solid fa-users fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <!-- Tarjeta: Préstamos Activos -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <a href="{% url 'loan_list' %}" class="text-decoration-none">
+                <div class="card h-100 border-left-info shadow">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Préstamos Activos</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_prestamos_activos }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fa-solid fa-file-invoice-dollar fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
+
+
+<!-- Sección de Agenda de Cobros Ampliada -->
+<section class="row">
+    <div class="col-lg-12 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary"><i class="fa-solid fa-calendar-day"></i> Agenda de Cobros de la Semana</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Columna Hoy -->
+                    <div class="col-md-4">
+                        <h5>Hoy</h5>
+                        {% if cobros_hoy %}
+                            <ul class="list-group list-group-flush">
+                                {% for cuota in cobros_hoy %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <a href="{% url 'client_detail' cuota.prestamo.cliente.pk %}">{{ cuota.prestamo.cliente }}</a>
+                                            <small class="text-muted d-block">Préstamo #{{ cuota.prestamo.id }}</small>
+                                        </div>
+                                        <span class="badge bg-primary rounded-pill">${{ cuota.monto_cuota|intcomma|floatformat:2 }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-center text-muted mt-3">No hay cobros programados.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Columna Mañana -->
+                    <div class="col-md-4">
+                        <h5>Mañana</h5>
+                        {% if cobros_manana %}
+                            <ul class="list-group list-group-flush">
+                                {% for cuota in cobros_manana %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <a href="{% url 'client_detail' cuota.prestamo.cliente.pk %}">{{ cuota.prestamo.cliente }}</a>
+                                            <small class="text-muted d-block">Préstamo #{{ cuota.prestamo.id }}</small>
+                                        </div>
+                                        <span class="badge bg-secondary rounded-pill">${{ cuota.monto_cuota|intcomma|floatformat:2 }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-center text-muted mt-3">No hay cobros programados.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Columna Próximos 7 Días -->
+                    <div class="col-md-4">
+                        <h5>Próximos 7 Días</h5>
+                        {% if cobros_proximos_7_dias %}
+                            <ul class="list-group list-group-flush">
+                                {% for cuota in cobros_proximos_7_dias %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <a href="{% url 'client_detail' cuota.prestamo.cliente.pk %}">{{ cuota.prestamo.cliente }}</a>
+                                            <small class="text-muted d-block">Vence: {{ cuota.fecha_vencimiento|date:"D, d M" }}</small>
+                                        </div>
+                                        <span class="badge bg-info rounded-pill">${{ cuota.monto_cuota|intcomma|floatformat:2 }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-center text-muted mt-3">No hay más cobros esta semana.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Estilos adicionales para las tarjetas de resumen -->
+<style>
+    /* Solución de alineación con Flexbox */
+    .card-body .row .col.mr-2 {
+        display: flex;
+        flex-direction: column;
+        justify-content: center; /* Centra el contenido verticalmente */
+    }
+
+    .border-left-primary { border-left: .25rem solid #4e73df !important; }
+    .border-left-secondary { border-left: .25rem solid #858796 !important; }
+    .border-left-success { border-left: .25rem solid #1cc88a !important; }
+    .border-left-info { border-left: .25rem solid #36b9cc !important; }
+    .border-left-warning { border-left: .25rem solid #f6c23e !important; }
+    .text-xs { font-size: .7rem; }
+    .text-gray-300 { color: #dddfeb !important; }
+</style>
+{% endblock %}

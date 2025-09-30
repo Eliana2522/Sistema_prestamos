@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load format_helpers %}
+
+{% block title %}Detalles Financieros{% endblock %}
+
+{% block content %}
+<header class="page-header d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1><i class="fa-solid fa-money-bill-trend-up"></i> Detalles Financieros</h1>
+        <p class="text-muted">Desglose detallado de las métricas financieras clave de tu negocio.</p>
+    </div>
+    <a href="{% url 'panel_informativo' %}" class="btn btn-outline-primary"><i class="fa-solid fa-arrow-left"></i> Volver al Panel</a>
+</header>
+
+<!-- Sección de Resumen General -->
+<section class="mb-5">
+    <h3 class="mb-3">Resumen General</h3>
+    <div class="row">
+        <!-- Capital Inicial -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card h-100 border-left-secondary shadow">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Capital Inicial</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">${{ capital_inicial|format_number }}</div>
+                </div>
+            </div>
+        </div>
+        <!-- Total Desembolsado -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card h-100 border-left-danger shadow">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Total Prestado</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">${{ total_desembolsado|format_number }}</div>
+                </div>
+            </div>
+        </div>
+        <!-- Total Recibido -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card h-100 border-left-success shadow">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Cobrado</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">${{ total_recibido_pagos|format_number }}</div>
+                </div>
+            </div>
+        </div>
+        <!-- Dinero en Caja -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card h-100 border-left-info shadow">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Dinero en Caja</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">${{ dinero_en_caja|format_number }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Sección de Cartera y Ganancias -->
+<section class="mb-5">
+    <h3 class="mb-3">Cartera y Ganancias</h3>
+    <div class="row">
+        <!-- Cartera Activa -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card h-100 border-left-warning shadow">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Cartera Activa (Capital en la calle)</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">${{ cartera_activa|format_number }}</div>
+                </div>
+            </div>
+        </div>
+        <!-- Ganancia Realizada -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card h-100 border-left-primary shadow">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Ganancia Realizada (Intereses Cobrados)</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">${{ ganancia_realizada|format_number }}</div>
+                </div>
+            </div>
+        </div>
+        <!-- Ganancia Potencial -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card h-100 border-left-info-light shadow">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-info-light text-uppercase mb-1">Ganancia Potencial (Intereses por Cobrar)</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">${{ ganancia_potencial|format_number }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Sección de Desglose de Préstamos -->
+<section class="mb-5">
+    <h3 class="mb-3">Desglose de Préstamos</h3>
+    <div class="row">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-4 font-weight-bold text-primary">{{ num_prestamos_activos }}</div>
+                    <div class="text-muted">Préstamos Activos</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-4 font-weight-bold text-success">{{ num_prestamos_pagados }}</div>
+                    <div class="text-muted">Préstamos Pagados</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-4 font-weight-bold text-danger">{{ num_prestamos_en_atraso }}</div>
+                    <div class="text-muted">Préstamos en Atraso</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="h4 font-weight-bold text-info">${{ monto_promedio|format_number }}</div>
+                    <div class="text-muted">Monto Promedio por Préstamo</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Sección de Actividad Reciente -->
+<section class="row">
+    <!-- Últimos Pagos Registrados -->
+    <div class="col-lg-7 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success"><i class="fa-solid fa-clock-rotate-left"></i> Últimos 10 Pagos Registrados</h6>
+            </div>
+            <div class="card-body">
+                {% if pagos_recientes %}
+                    <div class="list-group list-group-flush">
+                        {% for pago in pagos_recientes %}
+                            <a href="{% url 'loan_detail' pago.cuota.prestamo.pk %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ pago.cuota.prestamo.cliente }}</h6>
+                                    <small class="text-muted">{{ pago.fecha_pago|date:"d M Y" }}</small>
+                                </div>
+                                <p class="mb-0">
+                                    Pagó <strong class="text-success">+${{ pago.monto_pagado|format_number }}</strong> para el Préstamo #{{ pago.cuota.prestamo.id }}.
+                                </p>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center text-muted mt-3">No se han registrado pagos.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Últimos Préstamos Otorgados -->
+    <div class="col-lg-5 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary"><i class="fa-solid fa-handshake-angle"></i> Últimos 5 Préstamos Otorgados</h6>
+            </div>
+            <div class="card-body">
+                {% if prestamos_recientes %}
+                    <ul class="list-group list-group-flush">
+                        {% for prestamo in prestamos_recientes %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <a href="{% url 'loan_detail' prestamo.pk %}">Préstamo #{{ prestamo.id }}</a>
+                                    <small class="d-block text-muted">{{ prestamo.cliente }}</small>
+                                </div>
+                                <span class="font-weight-bold">${{ prestamo.monto|format_number }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-center text-muted mt-3">No se han otorgado préstamos recientemente.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Estilos (los mismos del panel para consistencia) -->
+<style>
+    .border-left-primary { border-left: .25rem solid #4e73df !important; }
+    .border-left-secondary { border-left: .25rem solid #858796 !important; }
+    .border-left-success { border-left: .25rem solid #1cc88a !important; }
+    .border-left-info { border-left: .25rem solid #36b9cc !important; }
+    .border-left-warning { border-left: .25rem solid #f6c23e !important; }
+    .border-left-danger { border-left: .25rem solid #e74a3b !important; }
+    .border-left-info-light { border-left: .25rem solid #66d1d1 !important; }
+    .text-info-light { color: #66d1d1 !important; }
+    .text-xs { font-size: .8rem; }
+    .text-gray-800 { color: #5a5c69 !important; }
+</style>
+{% endblock %}

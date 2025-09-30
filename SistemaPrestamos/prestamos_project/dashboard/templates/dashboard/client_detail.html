@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load format_helpers %}
+
+{% block title %}Perfil de {{ cliente.nombres }} {{ cliente.apellidos }}{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <!-- Título con el nombre del cliente -->
+    <h1>Perfil de Cliente: {{ cliente.nombres }} {{ cliente.apellidos }}</h1>
+    <p>{{ cliente.get_tipo_documento_display }}: {{ cliente.numero_documento }}</p>
+</header>
+
+<div class="mb-4">
+    <a href="javascript:history.back()" class="btn btn-sm btn-outline-secondary">Volver</a>
+</div>
+
+<div class="details-card">
+    <h3><i class="fas fa-user-circle" style="margin-right: 8px;"></i>Información Personal</h3>
+    <div class="details-list">
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-id-card" style="margin-right: 8px;"></i>Documento</span>
+            <span class="details-list-value">{{ cliente.get_tipo_documento_display }}: {{ cliente.numero_documento }}</span>
+        </div>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-envelope" style="margin-right: 8px;"></i>Correo Electrónico</span>
+            <span class="details-list-value">{{ cliente.email|default:"No especificado" }}</span>
+        </div>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-phone" style="margin-right: 8px;"></i>Teléfono</span>
+            <span class="details-list-value">{{ cliente.telefono|default:"No especificado" }}</span>
+        </div>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-map-marker-alt" style="margin-right: 8px;"></i>Dirección</span>
+            <span class="details-list-value">{{ cliente.direccion|default:"No especificada" }}</span>
+        </div>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-ring" style="margin-right: 8px;"></i>Estado Civil</span>
+            <span class="details-list-value">{{ cliente.get_estado_civil_display|default:"No especificado" }}</span>
+        </div>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-venus-mars" style="margin-right: 8px;"></i>Sexo</span>
+            <span class="details-list-value">{{ cliente.get_sexo_display|default:"No especificado" }}</span>
+        </div>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-birthday-cake" style="margin-right: 8px;"></i>Fecha de Nacimiento</span>
+            <span class="details-list-value">{{ cliente.fecha_nacimiento|date:"d M, Y"|default:"No especificada" }}</span>
+        </div>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-calendar-plus" style="margin-right: 8px;"></i>Fecha de Registro</span>
+            <span class="details-list-value">{{ cliente.fecha_registro|date:"d M, Y" }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="details-card" style="margin-top: 2rem;">
+    <h3><i class="fas fa-briefcase" style="margin-right: 8px;"></i>Información Laboral</h3>
+    <div class="details-list">
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-building" style="margin-right: 8px;"></i>Empresa</span>
+            <span class="details-list-value">{{ cliente.nombre_empresa|default:"No especificado" }}</span>
+        </div>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-user-tie" style="margin-right: 8px;"></i>Cargo</span>
+            <span class="details-list-value">{{ cliente.cargo|default:"No especificado" }}</span>
+        </div>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-money-bill-wave" style="margin-right: 8px;"></i>Ingresos Mensuales</span>
+            <span class="details-list-value">${{ cliente.ingresos_mensuales|format_number|default:"No especificado" }}</span>
+        </div>
+        <div class="details-list-item">
+            <span class="details-list-label"><i class="fas fa-calendar-day" style="margin-right: 8px;"></i>Fecha de Ingreso</span>
+            <span class="details-list-value">{{ cliente.fecha_ingreso_trabajo|date:"d M, Y"|default:"No especificada" }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Sección para mostrar el historial de préstamos -->
+<section class="loan-history-section">
+    <h2>Historial de Préstamos</h2>
+    <div class="table-container table-responsive">
+        <table class="table table-striped table-hover table-bordered">
+            <thead>
+                <tr>
+                    <th>ID Préstamo</th>
+                    <th>Monto</th>
+                    <th>Plazo</th>
+                    <th>Tasa de Interés</th>
+                    <th>Fecha de Desembolso</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prestamo in prestamos %}
+                <tr>
+                    <td>{{ prestamo.id }}</td>
+                    <td>{{ prestamo.monto|format_number }}</td>
+                    <td>{{ prestamo.plazo }} meses</td>
+                    <td>{{ prestamo.tasa_interes|floatformat:2 }}%</td>
+                    <td>{{ prestamo.fecha_desembolso|date:"d M, Y" }}</td>
+                    <td>
+                        <!-- Etiqueta de estado con color según el estado del préstamo -->
+                        <span class="status-badge status-{{ prestamo.estado }}">{{ prestamo.get_estado_display }}</span>
+                    </td>
+                    <td>
+                        <!-- Enlace para ver los detalles completos del préstamo -->
+                        <a href="{% url 'loan_detail' prestamo.pk %}" class="action-link">Ver Detalles</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">Este cliente no tiene préstamos registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
