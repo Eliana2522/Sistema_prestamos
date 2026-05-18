@@ -13,7 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- El título de la página puede ser personalizado por las plantillas hijas -->
-    <title>{% block title %}HEM Lending - Panel{% endblock %}</title>
+    <title>{% block title %}Express Loans - Panel{% endblock %}</title>
     
     <!-- Carga los archivos estáticos de Django -->
     {% load static %}
@@ -54,10 +54,12 @@
 
         <!-- Logo de la empresa a la izquierda -->
         <a class="navbar-brand" href="{% url 'panel_informativo' %}">
-            <img src="{% static 'img/LogoHEM.png' %}" alt="HEM Lending Logo" style="height: 50px; vertical-align: middle;" class="me-2">
+            <div class="bg-primary text-white rounded-3 d-flex align-items-center justify-content-center me-2" style="width: 45px; height: 45px; float: left;">
+                <i class="fas fa-hand-holding-dollar fa-lg"></i>
+            </div>
             <span style="vertical-align: middle;">
-                <strong class="d-block" style="font-size: 1.2rem; color: #2c3e50;">HEM Lending</strong>
-                <small class="d-block" style="font-size: 0.8rem; color: #566573;">Dinero rápido, decisiones inteligentes.</small>
+                <strong class="d-block" style="font-size: 1.2rem; color: #2c3e50;">Express Loans</strong>
+                <small class="d-block" style="font-size: 0.8rem; color: #566573;">Fast money, smart decisions.</small>
             </span>
         </a>
         

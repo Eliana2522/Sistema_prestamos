@@ -25,7 +25,7 @@ def reset_database():
             print("Tablas borradas.")
         else:
             print("No se encontraron tablas para borrar.")
-
+cd
     print("\n--- Reseteo completado ---")
 
 if __name__ == '__main__':
