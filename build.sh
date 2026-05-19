@@ -8,4 +8,4 @@ pip install -r requirements.txt
 cd prestamos_project
 python manage.py migrate --noinput
 python manage.py collectstatic --noinput
-python ../crear_admin.py
+python crear_admin.py
